@@ -18,8 +18,7 @@ Features:
   3. Suggested Word Corrections
   4. Display Dictionary (Alphabetical Order)
 
---------------------geeksforgeeks--------------------
-Attributes of a Trie (prefix) tree: 
+# GeeksForGeeks: Trie Data Structure
 The trie data structure, also known as a prefix tree, is a tree-like data structure used for efficient retrieval of key-value pairs. It is commonly used for implementing dictionaries and autocomplete features, making it a fundamental component in many search algorithms.
 
 What are the Properties of a Trie Data Structure?
