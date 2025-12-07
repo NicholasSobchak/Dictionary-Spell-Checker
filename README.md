@@ -5,11 +5,11 @@ This project will demonstrate efficient text lookup using Trie search time, O(L)
 
 The goal of this project is to apply a Trie trees to a real-world context word lookup and spell checking
 This includes experience with:
-  - Trie implementation
-  - Recursion and node manipulation
-  - File reading and dictionary parsing
-  - Designing search and suggestion algorithms
-  - Organizing a dictionary efficiently in memory
+  * Trie implementation
+  * Recursion and node manipulation
+  * File reading and dictionary parsing
+  * Designing search and suggestion algorithms
+  * Organizing a dictionary efficiently in memory
 
 
 Features:
@@ -30,11 +30,11 @@ What are the Properties of a Trie Data Structure?
 Compare Trie and Hash Table
 A Trie data structure is used for storing and retrieval of data and the same operations could be done using another data structure which is Hash Table but Trie data structure can perform these operations more efficiently. Moreover, a Trie data structure can be used for prefix-based searching and a sorted traversal of all words. So a Trie has advantages of both hash table and self balancing binary search trees.
 
-  We can efficiently do prefix search (or auto-complete) with Trie.
-  We can easily print all words in alphabetical order which is not easily possible with hashing.
-  There is no overhead of Hash functions in a Trie data structure.
-  Searching for a String even in the large collection of strings in a Trie data structure can be done in O(L) where L is input key length. Time complexity,
-  The main issue with Trie is extra memory space required to store words and the space may become huge for long list of words and/or for long words.
-  How does Trie Data Structure work?
-  Trie data structure can contain any number of characters including alphabets, numbers, and special characters. But for this article, we will discuss strings with characters a-z. Therefore, only 26 pointers need for every node, where the 0th index represents 'a' and the 25th index represents 'z' characters.
+  * We can efficiently do prefix search (or auto-complete) with Trie.
+  * We can easily print all words in alphabetical order which is not easily possible with hashing.
+  * There is no overhead of Hash functions in a Trie data structure.
+  * Searching for a String even in the large collection of strings in a Trie data structure can be done in O(L) where L is input key length. Time complexity,
+  * The main issue with Trie is extra memory space required to store words and the space may become huge for long list of words and/or for long words.
+  * How does Trie Data Structure work?
+  * Trie data structure can contain any number of characters including alphabets, numbers, and special characters. But for this article, we will discuss strings with characters a-z. Therefore, only 26 pointers       need for every node, where the 0th index represents 'a' and the 25th index represents 'z' characters.
 
