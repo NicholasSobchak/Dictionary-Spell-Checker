@@ -32,7 +32,7 @@ public:
     Dictionary();
     ~Dictionary();
     void loadFromFile(const string &filename);
-    bool insert(const string &word);
+    void insert(const string &word);
     bool search(const string &word);
     TrieNode findNode(const char &letter) const;
     void printDictionary() const;
