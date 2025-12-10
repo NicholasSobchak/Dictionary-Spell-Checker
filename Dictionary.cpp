@@ -8,16 +8,32 @@ void Dictionary::loadFromFile(const string &filename)
 {
 }
 
-void Dictionary::insert(const string &word)
+bool Dictionary::insert(const string &word)
 {
-    int wordSize = sizeof(word) / sizeof(word[0]);
-    for (int i = 0; i < wordSize; ++i)
+    TrieNode *current = m_root;
+    for (int i = 0; i < word.length(); ++i)
     {
-        if (!m_root.search(word[i])) // word[i] != m_root->m_children
+        if (!isalpha(word[i]))
+            continue;
+        char letter = tolower(word[i]);
+
+        int index = letter - 'a'; // general online formula to get the numeric index - (uses ASCII value),(0-based indexing)
+        // check if there is an existing child node
+        if (!current->m_children[index])
         {
-            m_root = nullptr;
+            current->m_children[index] = new TrieNode(); // create new child node
+
+            // check if the current letter is the end of the word
+            if (i == (word.length() - 1))
+            {
+                current->m_isEndOfWord = true;
+                current->m_word = word; // store the word in the dictionary
+            }
         }
+
+        current = current->m_children[index];
     }
+    return current->m_isEndOfWord;
 }
 
 bool Dictionary::search(const string &word)
