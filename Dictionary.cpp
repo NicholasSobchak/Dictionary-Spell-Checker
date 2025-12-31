@@ -1,9 +1,60 @@
 #include "Dictionary.h"
 #include <fstream>
-// implement Dicionary.cpp here
-Dictionary::Dictionary() : m_root(new TrieNode()) {}
+// implement Trie class here
+Trie::Trie() : m_root(new TrieNode()) {}
 
-Dictionary::~Dictionary() { delete m_root; }
+Trie::~Trie() { deleteTrie(m_root); }
+
+bool Trie::insert(const string &word)
+{
+    TrieNode *current = m_root;
+    for (int i = 0; i < int(word.length()); ++i)
+    {
+		char letter = word[i];
+        int index = letter - 'a'; // general online formula to get the numeric index - (uses ASCII value),(0-based indexing)
+        // check if there is an existing child node
+        if (!current->m_children[index])
+        {
+            current->m_children[index] = new TrieNode(); // create new child node
+
+            // check if the current letter is the end of the word
+            if (i == int(word.length() - 1))
+            {
+                current->m_isEndOfWord = true;
+                current->m_word = word;
+            }
+        }
+
+        current = current->m_children[index];
+    }
+    return current->m_isEndOfWord;
+}
+
+bool Trie::contains(const string &word)
+{
+	return false; // implement
+}
+
+/*********************************
+// Trie Helper Functions
+*********************************/
+void Trie::deleteTrie(TrieNode *node)
+{
+	if (!node)
+		return;
+
+	for (int i = 0; i < 26; ++i)
+	{
+		deleteTrie(node->m_children[i]);
+	}
+	
+	delete node;
+}
+
+// implement dictionary class here
+Dictionary::Dictionary() {}
+
+Dictionary::~Dictionary() {}
 
 void Dictionary::loadFromFile(const string &filename)
 {
@@ -19,79 +70,69 @@ void Dictionary::loadFromFile(const string &filename)
 	size_t p = filename.find_last_of('.');
 	string extension = "";
 
-	if (p == string::npos) cout << "File has no extension!" << endl;
+	if (p == string::npos) cout << "file has no extension!" << endl;
 	else extension = filename.substr(p);
 
 	// control file calls
 	if (extension == ".txt") 
-		openTxt(filename); // .txt
+		opentxt(filename); // .txt
 	
 	if (extension == ".csv") 
-		openCsv(filename); // .csv
+		opencsv(filename); // .csv
 	
 	if (extension == ".tsv") 
-		openTsv(filename); // .tsv
+		opentsv(filename); // .tsv
 	
 	if (extension == ".json") 
-		openJson(filename); // .json
+		openjson(filename); // .json
 	
 	if (extension == ".xml") 
-		openXml(filename); // .xml
+		openxml(filename); // .xml
 	
-	else cout << "File extension not recognized!" << endl;
+	else cout << "file extension not recognized!" << endl;
 }
 
-bool Dictionary::insert(const string &word)
+bool Dictionary::addWord(const string &word)
 {
-    TrieNode *current = m_root;
-    for (int i = 0; i < int(word.length()); ++i)
-    {
-        if (!isalpha(word[i]))
-            continue;
-        char letter = tolower(word[i]);
+	string cleanWord = normalize(word);
+	if(!cleanWord.empty())
+	   return false;
 
-        int index = letter - 'a'; // general online formula to get the numeric index - (uses ASCII value),(0-based indexing)
-        // check if there is an existing child node
-        if (!current->m_children[index])
-        {
-            current->m_children[index] = new TrieNode(); // create new child node
+	if(m_trie.contains(cleanWord))
+		return false;
 
-            // check if the current letter is the end of the word
-            if (i == int(word.length() - 1))
-            {
-                current->m_isEndOfWord = true;
-                current->m_word = word; // store the word in the dictionary
-            }
-        }
+	m_trie.insert(cleanWord);
+	
 
-        current = current->m_children[index];
-    }
-    return current->m_isEndOfWord;
-}
-
-bool Dictionary::search(const string &word)
-{
-    // implement
-
-    return false;
-}
-
-TrieNode findNode(const char &letter)
-{
-    // implement
-
-    return TrieNode();
+	return true;	
 }
 
 void printDictionary()
 {
-    // implement in-order traversal
+    // implement DFS traversal
+}
+
+void deleteDictionary()
+{
 }
 
 /*********************************
 // Dictionary Helper Functions
 **********************************/
-bool Dictionary::openTxt(const string &filename) // open .txt file
+string Dictionary::normalize(const string &word) const {
+	string cleanWord = word;
+	for (int i = 0; i < int(cleanWord.length()); ++i)
+	{
+		if (!isalpha(cleanWord[i]))
+			continue;
+
+		char letter = tolower(cleanWord[i]);
+		cleanWord += letter;
+	}
+	return cleanWord;
+}
+
+bool Dictionary::opentxt(const string &filename) // open .txt file
 {
     // open file
     ifstream file(filename);
@@ -127,14 +168,14 @@ bool Dictionary::openTxt(const string &filename) // open .txt file
         if (word.empty())
             continue;
 
-        insert(word); // add word to trie data structure
+        addWord(word); // add word to trie data structure
     }
 
     file.close();
     return true;
 }
 
-bool Dictionary::openCsv(const string &filename)
+bool Dictionary::opencsv(const string &filename)
 {
     // open file
     ifstream file(filename);
@@ -152,7 +193,7 @@ bool Dictionary::openCsv(const string &filename)
 	return true;
 }
 
-bool Dictionary::openTsv(const string &filename)                                
+bool Dictionary::opentsv(const string &filename)                                
 {
 	// open file
 	ifstream file(filename);
@@ -170,12 +211,12 @@ bool Dictionary::openTsv(const string &filename)
 	return true;
 }
 
-bool Dictionary::openJson(const string &filename)
+bool Dictionary::openjson(const string &filename)
 {
 	return true;
 }
 
-bool Dictionary::openXml(const string &filename)
+bool Dictionary::openxml(const string &filename)
 {
 	return true;
 }

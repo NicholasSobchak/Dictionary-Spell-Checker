@@ -6,23 +6,34 @@
 using namespace std;
 class Tester;
 
-class TrieNode
+class Trie
 {
 public:
-    friend class Dictionary;
-    friend class SpellChecker;
-    TrieNode() : m_isEndOfWord(false), m_word("")
-    {
-        for (int i = 0; i < 26; ++i)
-        {
-            m_children[i] = nullptr;
-        }
-    };
+    Trie();
+	~Trie();
+	bool insert(const string &word);	
+	bool contains(const string &word);	
 
 private:
-    TrieNode *m_children[26];
-    bool m_isEndOfWord;
-    string m_word;
+	struct TrieNode {
+		TrieNode *m_children[26];
+		bool m_isEndOfWord;
+		string m_word;
+		
+		TrieNode() : m_isEndOfWord(false), m_word("")
+		{
+			for (int i = 0; i < 26; ++i)
+			{
+				m_children[i] = nullptr;
+			}
+		}
+	};
+
+	TrieNode *m_root;	
+    /*********************************
+    // Helper declarations go here
+    **********************************/ 
+	void deleteTrie(TrieNode *node);
 };
 
 class Dictionary
@@ -33,22 +44,22 @@ public:
     Dictionary();
     ~Dictionary();
     void loadFromFile(const string &filename);
-    bool insert(const string &word);
-    bool search(const string &word);
-    TrieNode findNode(const char &letter) const;
+	bool addWord(const string &word);
     void printDictionary() const;
+	void deleteDictionary();
 
 private:
-    TrieNode *m_root;
+    Trie m_trie;
 
     /*********************************
     // Helper declarations go here
     **********************************/
-    bool openTxt(const string &filename);
-    bool openCsv(const string &filename);
-    bool openTsv(const string &filename);
-    bool openJson(const string &filename);
-    bool openXml(const string &filename);
+    bool opentxt(const string &filename);
+    bool opencsv(const string &filename);
+    bool opentsv(const string &filename);
+    bool openjson(const string &filename);
+    bool openxml(const string &filename);
+	string normalize(const string &word) const;
 };
 
 class SpellChecker

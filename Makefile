@@ -23,3 +23,4 @@ main.o: main.cpp Dictionary.h
 # Clean up build artifacts
 clean:
 	rm -f $(OBJS) $(TARGET)
+
