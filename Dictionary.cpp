@@ -35,6 +35,12 @@ bool Trie::contains(const string &word)
 	return false; // implement
 }
 
+void Trie::clear()
+{
+	deleteTrie(m_root);
+	m_root = new TrieNode;
+}
+
 /*********************************
 // Trie Helper Functions
 *********************************/
@@ -94,16 +100,17 @@ void Dictionary::loadFromFile(const string &filename)
 
 bool Dictionary::addWord(const string &word)
 {
+	// add normalized word to dictionary.txt and trie structure
 	string cleanWord = normalize(word);
-	if(!cleanWord.empty())
+	if(cleanWord.empty())
 	   return false;
 
 	if(m_trie.contains(cleanWord))
 		return false;
 
 	m_trie.insert(cleanWord);
-	
 
+	
 	return true;	
 }
 
@@ -112,8 +119,21 @@ void printDictionary()
     // implement DFS traversal
 }
 
-void deleteDictionary()
+void Dictionary::eraseAll()
 {
+	// "erase" the dictionary by overwriting it
+	ofstream outFile("dictionary.txt");
+
+	if (!outFile.is_open())
+	{
+		throw runtime_error("Error: cannot open file!");
+		return;
+	}
+	// overwrite with "" (empty)
+	outFile << "";
+	outFile.close();
+
+	m_trie.clear();
 }
 
 /*********************************
@@ -134,7 +154,7 @@ string Dictionary::normalize(const string &word) const {
 
 bool Dictionary::opentxt(const string &filename) // open .txt file
 {
-    // open file
+	// open file
     ifstream file(filename);
     if (!file.is_open())
     {
@@ -142,33 +162,11 @@ bool Dictionary::opentxt(const string &filename) // open .txt file
         return false;
     }
 
-    // parse basic .txt using lambda
+	// parse words
     string word;
     while (file >> word)
-    {
-        /*
-        lambda always has the following structure in C++:
-
-            [capture-clause] (parameters) mutable/noexcept -> return-type { function body }
-
-        The first lambda returns a boolean that will determine if the character will be removed from the word using remove_if & erase()
-        The second lambda returns the lowercase version of the character c and uses the transform method that assigns the returns lambda value back into the string
-        */
-
-        // remove non char (uses lambda function)
-        word.erase(remove_if(word.begin(), word.end(), [](unsigned char c)
-                             { return !isalpha(c); }),
-                   word.end());
-
-        // make lowercase (uses lambda function) (see C++ documentation for transform())
-        transform(word.begin(), word.end(), word.begin(), [](unsigned char c)
-                  { return tolower(c); });
-
-        // is word empty after processing?
-        if (word.empty())
-            continue;
-
-        addWord(word); // add word to trie data structure
+    {	
+        addWord(word); // add word to dictionary.txt and trie data structure
     }
 
     file.close();
