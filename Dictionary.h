@@ -12,7 +12,8 @@ public:
     Trie();
 	~Trie();
 	bool insert(const string &word);	
-	bool contains(const string &word);	
+	bool contains(const string &word);
+	void clear();
 
 private:
 	struct TrieNode {
@@ -30,11 +31,12 @@ private:
 	};
 
 	TrieNode *m_root;	
+
     /*********************************
     // Helper declarations go here
     **********************************/ 
 	void deleteTrie(TrieNode *node);
-};
+	};
 
 class Dictionary
 {
@@ -46,7 +48,7 @@ public:
     void loadFromFile(const string &filename);
 	bool addWord(const string &word);
     void printDictionary() const;
-	void deleteDictionary();
+	void eraseAll();
 
 private:
     Trie m_trie;
