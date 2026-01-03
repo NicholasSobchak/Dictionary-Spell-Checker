@@ -1,5 +1,6 @@
 #include "Dictionary.h"
 #include <fstream>
+#include <filesystem>
 // implement Trie class here
 Trie::Trie() : m_root(new TrieNode()) {}
 
@@ -7,27 +8,26 @@ Trie::~Trie() { deleteTrie(m_root); }
 
 bool Trie::insert(const string &word)
 {
-    TrieNode *current = m_root;
-    for (int i = 0; i < int(word.length()); ++i)
+    TrieNode *node {m_root};
+    for (int i{0}; i < int(word.length()); ++i)
     {
-		char letter = word[i];
-        int index = letter - 'a'; // general online formula to get the numeric index - (uses ASCII value),(0-based indexing)
-        // check if there is an existing child node
-        if (!current->m_children[index])
-        {
-            current->m_children[index] = new TrieNode(); // create new child node
-
-            // check if the current letter is the end of the word
-            if (i == int(word.length() - 1))
-            {
-                current->m_isEndOfWord = true;
-                current->m_word = word;
-            }
-        }
-
-        current = current->m_children[index];
+     	char letter {word[i]};
+        int index {letter - 'a'}; // general online formula to get the numeric index - (uses ASCII value),(0-based indexing)
+        
+	 	// check if there is an existing child node
+        if (!node->m_children[index]) 
+     	{ 
+     		node->m_children[index] = new TrieNode();
+     	}
+     		
+	    node = node->m_children[index];
     }
-    return current->m_isEndOfWord;
+
+	// check if word is already in Trie (node is last letter of the word)
+	if (node->m_isEndOfWord) return false;
+
+	node->m_isEndOfWord = true;
+    return node->m_isEndOfWord;
 }
 
 bool Trie::contains(const string &word)
@@ -41,6 +41,11 @@ void Trie::clear()
 	m_root = new TrieNode;
 }
 
+void Trie::dumpDebug()
+{
+	// implement
+}
+
 /*********************************
 // Trie Helper Functions
 *********************************/
@@ -49,7 +54,7 @@ void Trie::deleteTrie(TrieNode *node)
 	if (!node)
 		return;
 
-	for (int i = 0; i < 26; ++i)
+	for (int i{0}; i < 26; ++i)
 	{
 		deleteTrie(node->m_children[i]);
 	}
@@ -73,8 +78,8 @@ void Dictionary::loadFromFile(const string &filename)
         .xml
     */
 	// parse filename
-	size_t p = filename.find_last_of('.');
-	string extension = "";
+	size_t p {filename.find_last_of('.')};
+	string extension {""};
 
 	if (p == string::npos) cout << "file has no extension!" << endl;
 	else extension = filename.substr(p);
@@ -83,16 +88,16 @@ void Dictionary::loadFromFile(const string &filename)
 	if (extension == ".txt") 
 		opentxt(filename); // .txt
 	
-	if (extension == ".csv") 
+	else if (extension == ".csv") 
 		opencsv(filename); // .csv
 	
-	if (extension == ".tsv") 
+	else if (extension == ".tsv") 
 		opentsv(filename); // .tsv
 	
-	if (extension == ".json") 
+	else if (extension == ".json") 
 		openjson(filename); // .json
 	
-	if (extension == ".xml") 
+	else if (extension == ".xml") 
 		openxml(filename); // .xml
 	
 	else cout << "file extension not recognized!" << endl;
@@ -101,37 +106,53 @@ void Dictionary::loadFromFile(const string &filename)
 bool Dictionary::addWord(const string &word)
 {
 	// add normalized word to dictionary.txt and trie structure
-	string cleanWord = normalize(word);
-	if(cleanWord.empty())
-	   return false;
+	string cleanWord {normalize(word)};
+	if(cleanWord.empty()) return false;
 
-	if(m_trie.contains(cleanWord))
-		return false;
-
+	if(m_trie.contains(cleanWord)) return false;
 	m_trie.insert(cleanWord);
 
-	
 	return true;	
 }
 
-void printDictionary()
+void Dictionary::dump() const
 {
-    // implement DFS traversal
+	std::ifstream file("dictionary.txt"); 
+
+	if (!file.is_open())
+	{
+		throw std::runtime_error("Error: cannot open dictionary!");
+		return;
+	}
+
+	if (std::filesystem::file_size("dictionary.txt") == 0)
+	{
+		cout << "Dictionary is empty!" << endl;
+		return;
+	}
+
+	string word;
+	while (file >> word)
+	{
+		cout << word << ", "; // print columns with vector	
+	}
+
+	file.close();
 }
 
 void Dictionary::eraseAll()
 {
 	// "erase" the dictionary by overwriting it
-	ofstream outFile("dictionary.txt");
+	std::ofstream file("dictionary.txt");
 
-	if (!outFile.is_open())
+	if (!file.is_open())
 	{
-		throw runtime_error("Error: cannot open file!");
+		throw std::runtime_error("Error: cannot open dictionary!");
 		return;
 	}
 	// overwrite with "" (empty)
-	outFile << "";
-	outFile.close();
+	file << "";
+	file.close();
 
 	m_trie.clear();
 }
@@ -139,14 +160,14 @@ void Dictionary::eraseAll()
 /*********************************
 // Dictionary Helper Functions
 **********************************/
-string Dictionary::normalize(const string &word) const {
-	string cleanWord = word;
-	for (int i = 0; i < int(cleanWord.length()); ++i)
+string Dictionary::normalize(const string &word) const 
+{
+	string cleanWord {word};
+	for (int i{0}; i < int(cleanWord.length()); ++i)
 	{
-		if (!isalpha(cleanWord[i]))
-			continue;
+		if (!isalpha(cleanWord[i])) continue;
 
-		char letter = tolower(cleanWord[i]);
+		char letter = tolower(static_cast<unsigned char>(cleanWord[i])); // tolower() return int, passing a negative value = undefined behavior
 		cleanWord += letter;
 	}
 	return cleanWord;
@@ -155,10 +176,10 @@ string Dictionary::normalize(const string &word) const {
 bool Dictionary::opentxt(const string &filename) // open .txt file
 {
 	// open file
-    ifstream file(filename);
+	std::ifstream file(filename);
     if (!file.is_open())
     {
-        throw runtime_error("Error: Cannot open file!");
+        throw std::runtime_error("Error: Cannot open file!");
         return false;
     }
 
@@ -176,10 +197,10 @@ bool Dictionary::opentxt(const string &filename) // open .txt file
 bool Dictionary::opencsv(const string &filename)
 {
     // open file
-    ifstream file(filename);
+    std::ifstream file(filename);
 	if (!file.is_open())
     {
-       	throw runtime_error("Error: Cannot open file!");
+       	throw std::runtime_error("Error: Cannot open file!");
 		return false;
     }
 
@@ -194,10 +215,10 @@ bool Dictionary::opencsv(const string &filename)
 bool Dictionary::opentsv(const string &filename)                                
 {
 	// open file
-	ifstream file(filename);
+	std::ifstream file(filename);
 	if (!file.is_open())
 	{
-		throw runtime_error("Error: Cannot open file!");
+		throw std::runtime_error("Error: Cannot open file!");
 		return false;
 	}
 	

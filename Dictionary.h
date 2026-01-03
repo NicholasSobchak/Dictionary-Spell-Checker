@@ -2,8 +2,9 @@
 #define DICTIONARY_H
 #include <iostream>
 #include <string>
-#include <algorithm>
-using namespace std;
+using std::cout;
+using std::endl;
+using std::string;
 class Tester;
 
 class Trie
@@ -14,14 +15,14 @@ public:
 	bool insert(const string &word);	
 	bool contains(const string &word);
 	void clear();
+	void dumpDebug();
 
 private:
 	struct TrieNode {
 		TrieNode *m_children[26];
-		bool m_isEndOfWord;
-		string m_word;
-		
-		TrieNode() : m_isEndOfWord(false), m_word("")
+		bool m_isEndOfWord{false};
+				
+		TrieNode() 
 		{
 			for (int i = 0; i < 26; ++i)
 			{
@@ -36,7 +37,7 @@ private:
     // Helper declarations go here
     **********************************/ 
 	void deleteTrie(TrieNode *node);
-	};
+};
 
 class Dictionary
 {
@@ -47,7 +48,7 @@ public:
     ~Dictionary();
     void loadFromFile(const string &filename);
 	bool addWord(const string &word);
-    void printDictionary() const;
+    void dump() const;
 	void eraseAll();
 
 private:
