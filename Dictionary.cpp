@@ -9,6 +9,8 @@ Trie::~Trie() { deleteTrie(m_root); }
 bool Trie::insert(const string &word)
 {
     TrieNode *node {m_root};
+
+	// traverse to the last node in the word
     for (int i{0}; i < int(word.length()); ++i)
     {
      	char letter {word[i]};
@@ -32,7 +34,18 @@ bool Trie::insert(const string &word)
 
 bool Trie::contains(const string &word)
 {
-	return false; // implement
+	bool found {false};
+	TrieNode *node {m_root};
+
+	// traverse to the last node in the word
+	for (char letter : word)
+	{
+        int index {letter - 'a'};	    
+	    node = node->m_children[index];	
+	}
+
+	if (node->m_isEndOfWord) return found = true;
+	return found; // word not found
 }
 
 void Trie::clear()
@@ -53,7 +66,8 @@ void Trie::deleteTrie(TrieNode *node)
 {
 	if (!node)
 		return;
-
+	
+	// BFS
 	for (int i{0}; i < 26; ++i)
 	{
 		deleteTrie(node->m_children[i]);
@@ -108,8 +122,9 @@ bool Dictionary::addWord(const string &word)
 	// add normalized word to dictionary.txt and trie structure
 	string cleanWord {normalize(word)};
 	if(cleanWord.empty()) return false;
-
-	if(m_trie.contains(cleanWord)) return false;
+	
+	// IMPLEMENT: add to dictionary.txt
+	
 	m_trie.insert(cleanWord);
 
 	return true;	
@@ -157,6 +172,11 @@ void Dictionary::eraseAll()
 	m_trie.clear();
 }
 
+void Dictionary::debug()
+{
+	m_trie.dumpDebug();
+}
+
 /*********************************
 // Dictionary Helper Functions
 **********************************/
@@ -167,10 +187,18 @@ string Dictionary::normalize(const string &word) const
 	{
 		if (!isalpha(cleanWord[i])) continue;
 
-		char letter = tolower(static_cast<unsigned char>(cleanWord[i])); // tolower() return int, passing a negative value = undefined behavior
+		// tolower() return int, passing a negative value = undefined behavior
+		char letter = tolower(static_cast<unsigned char>(cleanWord[i])); 
 		cleanWord += letter;
 	}
 	return cleanWord;
+}
+
+void Dictionary::printColumns(const std::vector<string> &words) 
+{
+	[[maybe_unused]] int columns {5};
+	
+	// implement
 }
 
 bool Dictionary::opentxt(const string &filename) // open .txt file

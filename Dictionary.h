@@ -2,6 +2,7 @@
 #define DICTIONARY_H
 #include <iostream>
 #include <string>
+#include <vector>
 using std::cout;
 using std::endl;
 using std::string;
@@ -48,8 +49,9 @@ public:
     ~Dictionary();
     void loadFromFile(const string &filename);
 	bool addWord(const string &word);
-    void dump() const;
+    void dump() const; // dumps dictionary.txt
 	void eraseAll();
+	void debug(); // dumps trie visualization
 
 private:
     Trie m_trie;
@@ -63,6 +65,7 @@ private:
     bool openjson(const string &filename);
     bool openxml(const string &filename);
 	string normalize(const string &word) const;
+	void printColumns(const std::vector<string> &words);
 };
 
 class SpellChecker
