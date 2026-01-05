@@ -19,6 +19,6 @@ int main()
 	dict.addWord("impaired");
 	
 	// print dictionary.txt
-	dict.dump();
+	dict.dump(); // 5:25 pm (dump didn't print)
     return 0;
 };

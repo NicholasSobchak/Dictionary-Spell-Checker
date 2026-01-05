@@ -17,9 +17,12 @@ public:
     Trie();
 	~Trie();
 	bool insert(const string &word);	
-	bool contains(const string &word);
+	bool contains(const string &word) const;
+	void remove(const string &word);
 	void clear();
-	void dumpDebug();
+	void writeAll(std::ostream &out) const;
+	void dumpDebug() const;	
+	void print() const;
 
 private:
 	struct TrieNode {
@@ -41,6 +44,7 @@ private:
     // Helper declarations go here
     **********************************/ 
 	void deleteTrie(TrieNode *node);
+	void write(TrieNode *node, string &currentWord, std::ostream &out) const;
 };
 
 class Dictionary
@@ -50,11 +54,13 @@ public:
     // implement Dictionary class here
     Dictionary();
     ~Dictionary();
+	void load();
+	void save();
     void loadFromFile(const string &filename);
 	bool addWord(const string &word);
-    void dump() const; // dumps dictionary.txt
+    void dump() const; // dumps trie.print()
+	void debug() const; // dumps trie.dumpDebug()
 	void eraseAll();
-	void debug(); // dumps trie visualization
 
 private:
     Trie m_trie;
@@ -68,8 +74,6 @@ private:
     bool openjson(const string &filename);
     bool openxml(const string &filename);
 	string normalize(const string &word) const;
-	void printTerminal(const std::vector<string> &words) const;
-	int terminalWidth() const;
 };
 
 class SpellChecker
