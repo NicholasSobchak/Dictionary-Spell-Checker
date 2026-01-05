@@ -1,7 +1,8 @@
 #include "Dictionary.h"
 #include <fstream>
 #include <filesystem>
-// implement Trie class here
+
+// TRIE CLASS //
 Trie::Trie() : m_root(new TrieNode()) {}
 
 Trie::~Trie() { deleteTrie(m_root); }
@@ -11,17 +12,12 @@ bool Trie::insert(const string &word)
     TrieNode *node {m_root};
 
 	// traverse to the last node in the word
-    for (int i{0}; i < int(word.length()); ++i)
+    for (char c : word)
     {
-     	char letter {word[i]};
-        int index {letter - 'a'}; // general online formula to get the numeric index - (uses ASCII value),(0-based indexing)
+        int index {c - 'a'}; // general online formula to get the numeric index - (uses ASCII value),(0-based indexing)
         
 	 	// check if there is an existing child node
-        if (!node->m_children[index]) 
-     	{ 
-     		node->m_children[index] = new TrieNode();
-     	}
-     		
+        if (!node->m_children[index]) { node->m_children[index] = new TrieNode(); }	
 	    node = node->m_children[index];
     }
 
@@ -29,7 +25,7 @@ bool Trie::insert(const string &word)
 	if (node->m_isEndOfWord) return false;
 
 	node->m_isEndOfWord = true;
-    return node->m_isEndOfWord;
+    return true;
 }
 
 bool Trie::contains(const string &word) const
@@ -48,14 +44,14 @@ bool Trie::contains(const string &word) const
 	return found; // word not found
 }
 
-void Trie::clear()
-{
-	deleteTrie(m_root);
-	m_root = new TrieNode;
-}
-
 void Trie::writeAll(std::ostream &out) const
 {
+	if (!out)
+	{
+		std::cerr << "output stream is invalid\n";
+		return;
+	}
+
 	string currentWord;
 	write(m_root, currentWord, out);
 }
@@ -101,69 +97,18 @@ void Trie::write(TrieNode *node, string &currentWord, std::ostream &out) const
 	}
 }
 
-// implement dictionary class here
-Dictionary::Dictionary() { load(); }
-
-Dictionary::~Dictionary() { save(); }
-
-void Dictionary::load()
+void Trie::clear()
 {
-	std::ifstream file("dictionary.txt");
-
-	if (!file) throw std::runtime_error("Cannot open dictionary.txt!");
-
-	string word;
-	while (file >> word)
-	{
-		addWord(word);
-	}
+	deleteTrie(m_root);
+	m_root = new TrieNode();
 }
 
-void Dictionary::save()
-{
-	// treat dicitonary.txt as a snapshot, not a log
-	// overwrite dictionary.txt with all words from trie
-	std::ofstream file("dictionary.txt");
-	
-	if (!file) throw std::runtime_error("Cannot open dictionary.txt!");
-	file.close();
-	m_trie.writeAll(file);		
-}
+// DICTIONARY CLASS //
+Dictionary::Dictionary() { load(DICT); }
 
-void Dictionary::loadFromFile(const string &filename)
-{
-	/*
-	   compatible file type:
-        .txt
-        .csv
-        .tsv
-        .json
-        .xml
-    */
-	// parse filename
-	size_t p {filename.find_last_of('.')};
-	string extension {""};
-
-	if (p == string::npos) cout << "file has no extension!" << endl;
-	else extension = filename.substr(p);
-
-	// control file calls
-	if (extension == ".txt") 
-		opentxt(filename); // .txt
-	
-	else if (extension == ".csv") 
-		opencsv(filename); // .csv
-	
-	else if (extension == ".tsv") 
-		opentsv(filename); // .tsv
-	
-	else if (extension == ".json") 
-		openjson(filename); // .json
-	
-	else if (extension == ".xml") 
-		openxml(filename); // .xml
-	
-	else cout << "file extension not recognized!" << endl;
+Dictionary::~Dictionary() 
+{ 
+	save(DICT); 
 }
 
 bool Dictionary::addWord(const string &word)
@@ -177,71 +122,95 @@ bool Dictionary::addWord(const string &word)
 	return true;	
 }
 
-void Dictionary::dump() const { m_trie.print(); }
+void Dictionary::dump() const { m_trie.print(); } 
 
 void Dictionary::debug() const { m_trie.dumpDebug(); }
 
-void Dictionary::eraseAll()
-{
-	// "erase" the dictionary by overwriting it
-	std::ofstream file("dictionary.txt");
+void Dictionary::loadTxt(const string &filename) { load(filename); }
 
-	if (!file.is_open()) throw std::runtime_error("Error: cannot open dictionary!");
+/*
+void Dictionary::loadInfo(const string &filename)
+{
+
+	   compatible file type:
+        .csv
+        .tsv
+        .json
+        .xml
+
+	// parse filename
+	size_t p {filename.find_last_of('.')};
+	string extension {""};
+
+	if (p == string::npos) cout << "Error: file has no extension!" << endl;
+	else extension = filename.substr(p);
+
+	// control file calls
+	if (extension == ".csv") 
+		opencsv(filename); // .csv
 	
-	// overwrite with "" (empty)
-	file << "";
+	else if (extension == ".tsv") 
+		opentsv(filename); // .tsv
 	
-	// clear all words from trie
-	m_trie.clear();
+	else if (extension == ".json") 
+		openjson(filename); // .json
+	
+	else if (extension == ".xml") 
+		openxml(filename); // .xml
+	
+	else cout << "Error: file extension not recognized." << endl;
 }
+*/
 
 /*********************************
 // Dictionary Helper Functions
 **********************************/
 string Dictionary::normalize(const string &word) const 
 {
-	string cleanWord {word};
-	for (int i{0}; i < int(cleanWord.length()); ++i)
+	string cleanWord {""};
+	for (char c : word)
 	{
-		if (!isalpha(cleanWord[i])) continue;
-
+		if (!isalpha(static_cast<unsigned char>(c))) continue;
+		{
 		// tolower() return int, passing a negative value = undefined behavior
-		char letter = tolower(static_cast<unsigned char>(cleanWord[i])); 
-		cleanWord += letter;
+		cleanWord.push_back(tolower(static_cast<unsigned char>(c))); 
+		}	
 	}
 	return cleanWord;
 }
 
-bool Dictionary::opentxt(const string &filename) // open .txt file
+void Dictionary::load(const string &filename)
 {
-	// open file
 	std::ifstream file(filename);
-    if (!file.is_open()) throw std::runtime_error("Error: Cannot open file!");
 
-	// parse words
-    string word;
-    while (file >> word)
-    {	
-        addWord(word); // add word to dictionary.txt and trie data structure
-    }
+	if (!file) throw std::runtime_error("Error: Cannot open dictionary.\n");
 
-    return true;
+	string word;
+	while (file >> word)
+	{
+		addWord(word);
+	}
 }
 
+void Dictionary::save(const string &filename) const 
+{
+	// treat dicitonary.txt as a snapshot, not a log
+	// overwrite dictionary.txt with all words from trie
+	std::ofstream file(filename);
+	
+	if (!file) throw std::runtime_error("Error: Cannot open dictionary.\n");
+	
+	// "snapshot" trie in file
+	m_trie.writeAll(file);		
+}
+/*
 bool Dictionary::opencsv(const string &filename)
 {
     // open file
     std::ifstream file(filename);
-	if (!file.is_open())
-    {
-       	throw std::runtime_error("Error: Cannot open file!");
-		return false;
-    }
+	if (!file) throw std::runtime_error("Error: Cannot open file.");
 
-    // parse using stringstream??
-   	string key, value;	
-
-	// if key == word
+    // load information
 
 	return true;
 }
@@ -250,16 +219,9 @@ bool Dictionary::opentsv(const string &filename)
 {
 	// open file
 	std::ifstream file(filename);
-	if (!file.is_open())
-	{
-		throw std::runtime_error("Error: Cannot open file!");
-		return false;
-	}
+	if (!file) throw std::runtime_error("Error: Cannot open file.");
 	
-	// parse
-	string key, value;
-	
-	// if key == word
+	// load information
 
 	return true;
 }
@@ -273,3 +235,4 @@ bool Dictionary::openxml(const string &filename)
 {
 	return true;
 }
+*/

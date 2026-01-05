@@ -11,12 +11,16 @@ int main()
 {	
 	Dictionary dict;
 	
-	// clear dictionary.txt
-	dict.eraseAll();
+	dict.addWord("/.tes12t");
 
 	// populate dictionary.txt
+	dict.addWord("had");
 	dict.addWord("hath");
 	dict.addWord("impaired");
+	dict.addWord("this");
+	dict.addWord("nameless");
+	dict.addWord("grace");
+
 	
 	// print dictionary.txt
 	dict.dump(); // 5:25 pm (dump didn't print)

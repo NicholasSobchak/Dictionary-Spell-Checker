@@ -10,6 +10,8 @@ using std::endl;
 using std::string;
 class Tester;
 
+inline constexpr const char *DICT {"dictionary.txt"};
+
 
 class Trie
 {
@@ -19,10 +21,10 @@ public:
 	bool insert(const string &word);	
 	bool contains(const string &word) const;
 	void remove(const string &word);
-	void clear();
 	void writeAll(std::ostream &out) const;
 	void dumpDebug() const;	
 	void print() const;
+	void clear();
 
 private:
 	struct TrieNode {
@@ -41,8 +43,9 @@ private:
 	TrieNode *m_root;	
 
     /*********************************
-    // Helper declarations go here
-    **********************************/ 
+	// Helper declarations go here
+	 **********************************/
+
 	void deleteTrie(TrieNode *node);
 	void write(TrieNode *node, string &currentWord, std::ostream &out) const;
 };
@@ -54,13 +57,11 @@ public:
     // implement Dictionary class here
     Dictionary();
     ~Dictionary();
-	void load();
-	void save();
-    void loadFromFile(const string &filename);
 	bool addWord(const string &word);
     void dump() const; // dumps trie.print()
 	void debug() const; // dumps trie.dumpDebug()
-	void eraseAll();
+	void loadTxt(const string &filename);
+    // void loadInfo(const string &filename);
 
 private:
     Trie m_trie;
@@ -68,12 +69,16 @@ private:
     /*********************************
     // Helper declarations go here
     **********************************/
-    bool opentxt(const string &filename);
+
+	string normalize(const string &word) const;
+	void load(const string &filename);
+	void save(const string &filename) const;
+	/*
     bool opencsv(const string &filename);
     bool opentsv(const string &filename);
     bool openjson(const string &filename);
     bool openxml(const string &filename);
-	string normalize(const string &word) const;
+	*/
 };
 
 class SpellChecker
