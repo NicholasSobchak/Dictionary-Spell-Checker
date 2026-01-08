@@ -2,15 +2,15 @@
 #define DICTIONARY_H
 #include <iostream>
 #include <string>
-#include <vector>
-#include <sys/ioctl.h>
-#include <unistd.h>
 using std::cout;
 using std::endl;
 using std::string;
 class Tester;
 
-inline constexpr const char *DICT {"dictionary.txt"};
+namespace dct {
+	inline constexpr const char *g_dict {"dictionary.txt"};
+	inline constexpr const int g_alpha {26};
+}
 
 
 class Trie
@@ -20,7 +20,7 @@ public:
 	~Trie();
 	bool insert(const string &word);	
 	bool contains(const string &word) const;
-	void remove(const string &word);
+	bool remove(string &word);
 	void writeAll(std::ostream &out) const;
 	void dumpDebug() const;	
 	void print() const;
@@ -47,7 +47,8 @@ private:
 	 **********************************/
 
 	void deleteTrie(TrieNode *node);
-	void write(TrieNode *node, string &currentWord, std::ostream &out) const;
+	void reWrite(const TrieNode *node, string &currentWord, std::ostream &out) const;
+	void dumpNode(const TrieNode *node, const string &prefix) const;
 };
 
 class Dictionary
@@ -58,9 +59,11 @@ public:
     Dictionary();
     ~Dictionary();
 	bool addWord(const string &word);
+	bool removeWord(const string &word);
     void dump() const; // dumps trie.print()
 	void debug() const; // dumps trie.dumpDebug()
 	void loadTxt(const string &filename);
+	void eraseAll();
     // void loadInfo(const string &filename);
 
 private:

@@ -11,18 +11,30 @@ int main()
 {	
 	Dictionary dict;
 	
-	dict.addWord("/.tes12t");
+	dict.eraseAll();
 
-	// populate dictionary.txt
 	dict.addWord("had");
 	dict.addWord("hath");
-	dict.addWord("impaired");
-	dict.addWord("this");
-	dict.addWord("nameless");
-	dict.addWord("grace");
+	
+	cout << "--- After adding had and hath ---" << endl;
+	dict.debug();
+	dict.dump();
+
+	cout << "--- Remove tress ---" << endl;
+	dict.removeWord("tress");
+	dict.debug();
+	dict.dump();
+
+	dict.removeWord("had");
+	cout << "\n--- After removing had ---" << endl;
+	dict.debug();
+	dict.dump();
+
+	dict.removeWord("hath");
+	cout << "\n--- After removing hath ---" << endl;
+	dict.debug();
+	dict.dump();
 
 	
-	// print dictionary.txt
-	dict.dump(); // 5:25 pm (dump didn't print)
     return 0;
 };
