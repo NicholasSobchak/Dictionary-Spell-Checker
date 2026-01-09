@@ -1,10 +1,12 @@
 #ifndef DICTIONARY_H
 #define DICTIONARY_H
-#include <iostream>
+#include <string_view>
 #include <string>
+#include <iostream>
 using std::cout;
 using std::endl;
 using std::string;
+using std::string_view;
 class Tester;
 
 namespace dct {
@@ -12,14 +14,13 @@ namespace dct {
 	inline constexpr const int g_alpha {26};
 }
 
-
 class Trie
 {
 public:
     Trie();
 	~Trie();
-	bool insert(const string &word);	
-	bool contains(const string &word) const;
+	bool insert(string_view word);	
+	bool contains(string_view word) const;
 	bool remove(string &word);
 	void writeAll(std::ostream &out) const;
 	void dumpDebug() const;	
@@ -47,8 +48,9 @@ private:
 	 **********************************/
 
 	void deleteTrie(TrieNode *node);
-	void reWrite(const TrieNode *node, string &currentWord, std::ostream &out) const;
+	void rewrite(const TrieNode *node, string &currentWord, std::ostream &out) const;
 	void dumpNode(const TrieNode *node, const string &prefix) const;
+	bool remove(TrieNode *&node, string_view word);
 };
 
 class Dictionary
@@ -58,8 +60,8 @@ public:
     // implement Dictionary class here
     Dictionary();
     ~Dictionary();
-	bool addWord(const string &word);
-	bool removeWord(const string &word);
+	bool addWord(string_view word);
+	bool removeWord(string_view word);
     void dump() const; // dumps trie.print()
 	void debug() const; // dumps trie.dumpDebug()
 	void loadTxt(const string &filename);
@@ -73,7 +75,7 @@ private:
     // Helper declarations go here
     **********************************/
 
-	string normalize(const string &word) const;
+	string normalize(string_view word) const;
 	void load(const string &filename);
 	void save(const string &filename) const;
 	/*

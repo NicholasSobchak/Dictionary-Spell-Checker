@@ -1,13 +1,13 @@
 #include "Dictionary.h"
-#include <fstream>
 #include <filesystem>
+#include <fstream>
 
 // TRIE CLASS //
 Trie::Trie() : m_root(new TrieNode()) {}
 
 Trie::~Trie() { deleteTrie(m_root); }
 
-bool Trie::insert(const string &word)
+bool Trie::insert(string_view word)
 {
     TrieNode *node {m_root};
 
@@ -28,7 +28,7 @@ bool Trie::insert(const string &word)
     return true;
 }
 
-bool Trie::contains(const string &word) const
+bool Trie::contains(string_view word) const
 {
 	TrieNode *node {m_root};
 
@@ -43,23 +43,7 @@ bool Trie::contains(const string &word) const
 	return node->m_isEndOfWord; // word not found
 }
 
-bool Trie::remove(string &word)
-{
-	TrieNode* node {m_root};
-	if (!contains(word)) return false;
-
-	// remove each node
-	for (char c : word)
-	{
-		int index {c - 'a'};
-		if (word.length() == 0) break;
-		word.pop_back();
-
-		node = node->m_children[index];
-	}
-
-	return true; // word removed
-}
+bool Trie::remove(string &word) { return remove(m_root, word); }
 
 void Trie::writeAll(std::ostream &out) const
 {
@@ -70,7 +54,7 @@ void Trie::writeAll(std::ostream &out) const
 	}
 
 	string currentWord;
-	reWrite(m_root, currentWord, out);
+	rewrite(m_root, currentWord, out);
 }
 
 void Trie::dumpDebug() const
@@ -104,7 +88,7 @@ void Trie::deleteTrie(TrieNode *node)
 	delete node;
 }
 
-void Trie::reWrite(const TrieNode *node, string &currentWord, std::ostream &out) const
+void Trie::rewrite(const TrieNode *node, string &currentWord, std::ostream &out) const
 { // general algorithm
 	if (!node) return;
 	if (node->m_isEndOfWord) out << currentWord << '\n';
@@ -116,7 +100,7 @@ void Trie::reWrite(const TrieNode *node, string &currentWord, std::ostream &out)
 		{
 			char letter {static_cast<char>('a' + i)};
 			currentWord.push_back(letter); // build word that will be written to the file
-			reWrite(node->m_children[i], currentWord, out);
+			rewrite(node->m_children[i], currentWord, out);
 			currentWord.pop_back(); // backtrack
 		}
 	}
@@ -149,12 +133,49 @@ void Trie::dumpNode(const TrieNode *node, const string &prefix) const
 	}
 }
 
+bool Trie::remove(TrieNode *&node, string_view word)
+{
+	if (!node) return false;
+	
+	if (word.empty())
+	{
+		if (!node->m_isEndOfWord) return false;
+		
+		node->m_isEndOfWord = false;
+		for (int i{0}; i < dct::g_alpha; ++i)
+		{
+			if (node->m_children[i]) return true;
+		}
+
+		delete node;
+		node = nullptr;
+		return true;
+	}
+
+	int index {word[0] - 'a'};
+	if (remove(node->m_children[index], word.substr(1)))
+	{
+		if (node->m_isEndOfWord) return true;
+
+		for (int i{0}; i < dct::g_alpha; ++i)
+		{
+			if (node->m_children[i]) return true;
+		}
+
+		delete node;
+		node = nullptr;
+		return true;
+	}
+	
+	return false;
+}
+
 // DICTIONARY CLASS //
 Dictionary::Dictionary() { load(dct::g_dict); }
 
 Dictionary::~Dictionary() { save(dct::g_dict); }
 
-bool Dictionary::addWord(const string &word)
+bool Dictionary::addWord(string_view word)
 {
 	// correct word and add it to trie
 	string cleanWord {normalize(word)};
@@ -165,7 +186,7 @@ bool Dictionary::addWord(const string &word)
 	return true;	
 }
 
-bool Dictionary::removeWord(const string &word)
+bool Dictionary::removeWord(string_view word)
 {
 	string cleanWord {normalize(word)};
 	if (cleanWord.empty()) return false;
@@ -220,7 +241,7 @@ void Dictionary::loadInfo(const string &filename)
 /*********************************
 // Dictionary Helper Functions
 **********************************/
-string Dictionary::normalize(const string &word) const 
+string Dictionary::normalize(string_view word) const 
 {
 	string cleanWord {""};
 	for (char c : word)
