@@ -1,6 +1,7 @@
 #include "Dictionary.h"
 #include <filesystem>
 #include <fstream>
+#include "nlohmann/json.hpp"
 
 // TRIE CLASS //
 Trie::Trie() : m_root(new TrieNode()) {}
@@ -11,36 +12,38 @@ bool Trie::insert(string_view word)
 {
     TrieNode *node {m_root};
 
-	// traverse to the last node in the word
+    // traverse to the last node in the word
     for (char c : word)
     {
         int index {c - 'a'}; // general online formula to get the numeric index - (uses ASCII value),(0-based indexing)
         
-	 	// check if there is an existing child node
-        if (!node->m_children[index]) { node->m_children[index] = new TrieNode(); }	
-	    node = node->m_children[index];
+        // check if there is an existing child node
+        if (!node->m_children[index]) {
+            node->m_children[index] = new TrieNode();
+        }
+        node = node->m_children[index];
     }
 
-	// check if word is already in Trie (node is last letter of the word)
-	if (node->m_isEndOfWord) return false;
+    // check if word is already in Trie (node is last letter of the word)
+    if (node->m_isEndOfWord) return false;
 
-	node->m_isEndOfWord = true;
+    node->m_isEndOfWord = true;
     return true;
 }
 
 bool Trie::contains(string_view word) const
 {
-	TrieNode *node {m_root};
+    TrieNode *node {m_root};
 
-	// traverse to the last node in the word
-	for (char c : word)
-	{
+    // traverse to the last node in the word
+    for (char c : word)
+    {
         int index {c - 'a'};
-		if (!node->m_children[index]) return false; // not found 		
-	    node = node->m_children[index];	// CHECK LOGIC FOR CRASH
-	}
+        if (!node->m_children[index]) return false; // not found
+        node = node->m_children[index];
+    }
 
-	return node->m_isEndOfWord; // word not found
+    return node->m_isEndOfWord; // word not found
 }
 
 bool Trie::remove(string &word) { return remove(m_root, word); }
@@ -196,6 +199,13 @@ bool Dictionary::removeWord(string_view word)
 	return true;
 }
 
+bool Dictionary::search(string_view word) const
+{
+	string cleanWord {normalize(word)};
+	if (cleanWord.empty()) return false;
+	return m_trie.contains(cleanWord);
+}
+
 void Dictionary::dump() const { m_trie.print(); } 
 
 void Dictionary::debug() const { m_trie.dumpDebug(); }
@@ -259,7 +269,7 @@ void Dictionary::load(const string &filename)
 {
 	std::ifstream file(filename);
 
-	if (!file) throw std::runtime_error("Error: Cannot open dictionary.\n");
+	if (!file) throw std::runtime_error("Error: Cannot open external dictionary.\n");
 
 	string word;
 	while (file >> word)
@@ -274,11 +284,45 @@ void Dictionary::save(const string &filename) const
 	// overwrite dictionary.txt with all words from trie
 	std::ofstream file(filename);
 	
-	if (!file) throw std::runtime_error("Error: Cannot open dictionary.\n");
+	if (!file) throw std::runtime_error("Error: Cannot open internal dictionary.\n");
 	
 	// "snapshot" trie in file
 	m_trie.writeAll(file);		
 }
+
+bool Dictionary::openjson(const string &filename)
+{
+	std::ifstream file(filename);
+
+	if (!file) throw std::runtime_error("Error: Cannot open external dictionary.\n");
+
+	nlohmann::json data;
+	try
+	{
+		file >> data;
+	}
+	catch (const nlohmann::json::parse_error &e)
+	{
+		throw std::runtime_error("Error parsing JSON from " + filename + ": " + e.what());
+	}
+
+	// JSON file is an object where keys are words
+	if (data.is_object())
+	{
+		for (auto it = data.begin(); it != data.end(); ++it)
+		{
+			addWord(it.key());
+		}
+	}
+	else
+	{
+		std::cerr << "Error: JSON file " << filename << " does not contain a top-level object." << std::endl;
+		return false;
+	}
+
+	return true;
+}
+
 #if 0
 bool Dictionary::opencsv(const string &filename)
 {
