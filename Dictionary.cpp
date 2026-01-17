@@ -31,6 +31,8 @@ bool Trie::insert(string_view word)
     return true;
 }
 
+bool Trie::remove(string &word) { return remove(m_root, word); }
+
 bool Trie::contains(string_view word) const
 {
     TrieNode *node {m_root};
@@ -45,8 +47,6 @@ bool Trie::contains(string_view word) const
 
     return node->m_isEndOfWord; // word not found
 }
-
-bool Trie::remove(string &word) { return remove(m_root, word); }
 
 void Trie::writeAll(std::ostream &out) const
 {
@@ -92,7 +92,7 @@ void Trie::deleteTrie(TrieNode *node)
 }
 
 void Trie::rewrite(const TrieNode *node, string &currentWord, std::ostream &out) const
-{ // general algorithm
+{ 
 	if (!node) return;
 	if (node->m_isEndOfWord) out << currentWord << '\n';
 	
@@ -110,7 +110,7 @@ void Trie::rewrite(const TrieNode *node, string &currentWord, std::ostream &out)
 }
 
 void Trie::dumpNode(const TrieNode *node, const string &prefix) const
-{ // gerneral algorithm
+{ 
 	if (!node) return; 
 
 	for (int i{0}; i < dct::g_alpha; ++i)
@@ -120,16 +120,17 @@ void Trie::dumpNode(const TrieNode *node, const string &prefix) const
 		if (!child) continue;
 		bool isLast = true;
 		
+		// check if the node has a child
 		for (int j{i+1}; j < dct::g_alpha; ++j)
 		{
 			if (node->m_children[j])
 			{
 				isLast = false;
-				break;
+				break; 
 			}
 		}
 		std::cout << prefix << (isLast ? "└── " : "├── ") << letter;
-		if (node->m_isEndOfWord) cout << " *"; // This was the original line without the fix
+		if (child->m_isEndOfWord) cout << " *"; 
 		cout << '\n';
 
 		dumpNode(node->m_children[i], prefix + (isLast ? "    " : "│   "));	
@@ -206,11 +207,11 @@ bool Dictionary::search(string_view word) const
 	return m_trie.contains(cleanWord);
 }
 
+void Dictionary::loadTxt(const string &filename) { load(filename); }
+
 void Dictionary::dump() const { m_trie.print(); } 
 
 void Dictionary::debug() const { m_trie.dumpDebug(); }
-
-void Dictionary::loadTxt(const string &filename) { load(filename); }
 
 void Dictionary::eraseAll() { m_trie.clear(); }
 

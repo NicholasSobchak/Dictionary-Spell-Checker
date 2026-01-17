@@ -10,8 +10,9 @@ int main()
 {
     Dictionary dict;
 
-    dict.eraseAll();
+	dict.eraseAll(); // for testing purposes
 
+#if 0
     // Load dictionary from JSON file
     cout << "Loading dictionary from nlohmann/words_dictionary.json..." << endl;
     if (dict.openjson("nlohmann/words_dictionary.json")) { cout << "Dictionary loaded successfully!" << endl; }
@@ -27,8 +28,8 @@ int main()
     
     if (dict.search("impaired")) { cout << "'impaired' found in dictionary." << endl; }
     else { cout << "'impaired' not found in dictionary." << endl; }
-
-#if 0 
+#endif
+//#if 0 
     // Original test code below this point
     dict.addWord("had");
     dict.addWord("hath");
@@ -51,7 +52,10 @@ int main()
     cout << "\n--- After removing hath ---" << endl;
     dict.debug();
     dict.dump();
-#endif
-    
+//#endif
+
+	// dict.debug();
+	// dict.dump();
+	
     return 0;
 }

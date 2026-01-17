@@ -22,8 +22,8 @@ public:
     Trie();
     ~Trie();
     bool insert(string_view word);
-    bool contains(string_view word) const;
     bool remove(string &word);
+    bool contains(string_view word) const;
     void writeAll(std::ostream &out) const;
     void dumpDebug() const;
     void print() const;
@@ -64,12 +64,13 @@ public:
     ~Dictionary();
     bool addWord(string_view word);
     bool removeWord(string_view word);
-	bool search(string_view word) const;
+	bool search(string_view word) const; 
+	void loadTxt(const string &filename);
     void dump() const; // dumps trie.print()
     void debug() const; // dumps trie.dumpDebug()
-    void loadTxt(const string &filename);
     void eraseAll();
-    // void loadInfo(const string &filename);
+    
+	// void loadInfo(const string &filename);
     bool openjson(const string &filename); // make public for now
 
 private:
@@ -82,7 +83,7 @@ private:
     string normalize(string_view word) const;
     void load(const string &filename);
     void save(const string &filename) const;
-    //bool openjson(const string &filename);
+    // bool openjson(const string &filename);
     /*
     bool opencsv(const string &filename);
     bool opentsv(const string &filename);
