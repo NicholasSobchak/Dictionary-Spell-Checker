@@ -3,7 +3,7 @@ The Spell Checker is a C++ application that uses a Trie (prefix) tree to identif
 
 This project will demonstrate efficient text lookup using Trie search time, O(L). Making it a practical data-structure-driven tool.
 
-The goal of this project is to apply a Trie trees to a real-world context word lookup and spell checking
+The goal of this project is to apply a Trie tree to a dictionary search, word lookup, and spell checker that will return word data to the user.
 This includes experience with:
   * Trie implementation
   * Recursion and node manipulation
