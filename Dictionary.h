@@ -1,7 +1,8 @@
 #ifndef DICTIONARY_H
 #define DICTIONARY_H
-#include <fstream>
+#include "nlohmann/json.hpp"
 #include <string_view>
+#include <fstream>
 #include <filesystem>
 #include <string>
 #include <iostream>
@@ -96,6 +97,7 @@ class SpellChecker
 public:
     // implement SpellChecker class here
 	explicit SpellChecker(const Dictionary &dictionary);
+	~SpellChecker();
 	bool check(string_view word);
 	// vector<string> suggest(string_view word);
 
