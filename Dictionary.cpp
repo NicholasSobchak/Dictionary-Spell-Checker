@@ -1,51 +1,53 @@
 #include "Dictionary.h"
-#include <fstream>
-#include <filesystem>
 
 // TRIE CLASS //
 Trie::Trie() : m_root(new TrieNode()) {}
 
 Trie::~Trie() { deleteTrie(m_root); }
 
-bool Trie::insert(const string &word)
+bool Trie::insert(string_view word)
 {
     TrieNode *node {m_root};
 
-	// traverse to the last node in the word
+    // traverse to the last node in the word
     for (char c : word)
     {
         int index {c - 'a'}; // general online formula to get the numeric index - (uses ASCII value),(0-based indexing)
         
-	 	// check if there is an existing child node
-        if (!node->m_children[index]) { node->m_children[index] = new TrieNode(); }	
-	    node = node->m_children[index];
+        // check if there is an existing child node
+        if (!node->m_children[index]) {
+            node->m_children[index] = new TrieNode();
+        }
+        node = node->m_children[index];
     }
 
-	// check if word is already in Trie (node is last letter of the word)
-	if (node->m_isEndOfWord) return false;
+    // check if word is already in Trie (node is last letter of the word)
+    if (node->m_isEndOfWord) return false;
 
-	node->m_isEndOfWord = true;
+    node->m_isEndOfWord = true;
     return true;
 }
 
-bool Trie::contains(const string &word) const
+bool Trie::remove(string &word) { return remove(m_root, word); }
+
+bool Trie::contains(string_view word) const
 {
-	bool found {false};
-	TrieNode *node {m_root};
+    TrieNode *node {m_root};
 
-	// traverse to the last node in the word
-	for (char letter : word)
-	{
-        int index {letter - 'a'};	    
-	    node = node->m_children[index];	// CHECK LOGIC FOR CRASH
-	}
+    // traverse to the last node in the word
+    for (char c : word)
+    {
+        int index {c - 'a'};
+        if (!node->m_children[index]) return false; // not found
+        node = node->m_children[index];
+    }
 
-	if (node->m_isEndOfWord) return found = true;
-	return found; // word not found
+    return node->m_isEndOfWord; // word not found
 }
 
 void Trie::writeAll(std::ostream &out) const
 {
+	// write words to given output
 	if (!out)
 	{
 		std::cerr << "output stream is invalid\n";
@@ -53,26 +55,32 @@ void Trie::writeAll(std::ostream &out) const
 	}
 
 	string currentWord;
-	write(m_root, currentWord, out);
+	rewrite(m_root, currentWord, out); // call recursive write function
 }
 
 void Trie::dumpDebug() const
 {
-	// implement
+	std::cout << "(root)\n";
+    dumpNode(m_root, ""); // call recursive dump node function
 }
 
 void Trie::print() const { writeAll(cout); } // same as writeAll logic
+
+void Trie::clear()
+{
+	deleteTrie(m_root);
+	m_root = new TrieNode(); // initalize new root
+}
 
 /*********************************
 // Trie Helper Functions
 *********************************/
 void Trie::deleteTrie(TrieNode *node)
 {
-	if (!node)
-		return;
+	if (!node) return;
 	
-	// BFS
-	for (int i{0}; i < 26; ++i)
+	// DFS
+	for (int i{0}; i < dct::g_alpha; ++i)
 	{
 		deleteTrie(node->m_children[i]);
 	}
@@ -80,64 +88,151 @@ void Trie::deleteTrie(TrieNode *node)
 	delete node;
 }
 
-void Trie::write(TrieNode *node, string &currentWord, std::ostream &out) const
-{
+void Trie::rewrite(const TrieNode *node, string &currentWord, std::ostream &out) const
+{ 
 	if (!node) return;
-
-	if (node->m_isEndOfWord) out << currentWord << '\n';
-
-	for (int i{0}; i < 26; ++i)
+	if (node->m_isEndOfWord) out << currentWord << '\n'; // write complete word
+	
+	// DFS
+	for (int i{0}; i < dct::g_alpha; ++i)
 	{
 		if (node->m_children[i])
 		{
-			currentWord.push_back(static_cast<char>('a' + i)); // build word that will be written to the file
-			write(node->m_children[i], currentWord, out);
-			currentWord.pop_back(); // backtrack
+			char letter {static_cast<char>('a' + i)};
+			currentWord.push_back(letter); // build word 
+			rewrite(node->m_children[i], currentWord, out);
+			currentWord.pop_back(); // backtrack (undo complete word) works because of recursive rewrite
 		}
 	}
 }
 
-void Trie::clear()
+void Trie::dumpNode(const TrieNode *node, const string &prefix) const
+{ 
+	if (!node) return; 
+	
+	// DFS
+	for (int i{0}; i < dct::g_alpha; ++i)
+	{
+		char letter {static_cast<char>('a' + i)};
+		const TrieNode *child = node->m_children[i];
+		if (!child) continue;
+		bool isLast = true;
+		
+		// check for another sibling
+		for (int j{i+1}; j < dct::g_alpha; ++j)
+		{
+			// check for later children
+			if (node->m_children[j])
+			{
+				// current child is not the last sibling
+				isLast = false;
+				break; 
+			}
+		}
+
+		// print graphics
+		std::cout << prefix << (isLast ? "└── " : "├── ") << letter;
+		if (child->m_isEndOfWord) cout << " *"; 
+		cout << '\n';
+
+		dumpNode(node->m_children[i], prefix + (isLast ? "    " : "│   "));	
+	}
+}
+
+bool Trie::remove(TrieNode *&node, string_view word)
 {
-	deleteTrie(m_root);
-	m_root = new TrieNode();
+	if (!node) return false;
+
+	// check if end of word	
+	if (word.empty())
+	{
+		if (!node->m_isEndOfWord) return false; // word is not stored
+	
+		// start removing the word	
+		node->m_isEndOfWord = false;
+		for (int i{0}; i < dct::g_alpha; ++i)
+		{
+			// if the node has children it's still needed for another word
+			if (node->m_children[i]) return true;
+		}
+
+		// if it has no children we can safely remove the node
+		delete node;
+		node = nullptr;
+		return true;
+	}
+	
+	// find child index
+	int index {word[0] - 'a'};
+	if (remove(node->m_children[index], word.substr(1))) // recursively remove the rest of the word
+	{
+		if (node->m_isEndOfWord) return true; // if the current node marks the end of another word, preserve it
+
+		// check if node has any children and is still needed
+		for (int i{0}; i < dct::g_alpha; ++i)
+		{
+			if (node->m_children[i]) return true;
+		}
+		
+		// if the node is not the end of a word and has no children
+		delete node;
+		node = nullptr;
+		return true;
+	}
+	
+	return false;
 }
 
 // DICTIONARY CLASS //
-Dictionary::Dictionary() { load(DICT); }
+Dictionary::Dictionary() { load(dct::g_dict); }
 
-Dictionary::~Dictionary() 
-{ 
-	save(DICT); 
-}
+Dictionary::~Dictionary() { save(dct::g_dict); } // treat dicitonary.txt as a snapshot, not a log
 
-bool Dictionary::addWord(const string &word)
+bool Dictionary::addWord(string_view word)
 {
-	// correct word and add it to trie
 	string cleanWord {normalize(word)};
-	if(cleanWord.empty()) return false;
+	if (cleanWord.empty()) return false;
 	
 	if (!m_trie.insert(cleanWord)) return false;
 
 	return true;	
 }
 
+bool Dictionary::removeWord(string_view word)
+{
+	string cleanWord {normalize(word)};
+	if (cleanWord.empty()) return false;
+
+	if (!m_trie.remove(cleanWord)) return false;
+
+	return true;
+}
+
+bool Dictionary::search(string_view word) const
+{
+	string cleanWord {normalize(word)};
+	if (cleanWord.empty()) return false;
+	return m_trie.contains(cleanWord);
+}
+
+void Dictionary::loadTxt(const string &filename) { load(filename); }
+
 void Dictionary::dump() const { m_trie.print(); } 
 
 void Dictionary::debug() const { m_trie.dumpDebug(); }
 
-void Dictionary::loadTxt(const string &filename) { load(filename); }
+void Dictionary::eraseAll() { m_trie.clear(); }
 
-/*
+#if 0
 void Dictionary::loadInfo(const string &filename)
 {
-
+	/*
 	   compatible file type:
         .csv
         .tsv
         .json
         .xml
-
+	*/
 	// parse filename
 	size_t p {filename.find_last_of('.')};
 	string extension {""};
@@ -160,19 +255,19 @@ void Dictionary::loadInfo(const string &filename)
 	
 	else cout << "Error: file extension not recognized." << endl;
 }
-*/
+#endif
 
 /*********************************
 // Dictionary Helper Functions
 **********************************/
-string Dictionary::normalize(const string &word) const 
+string Dictionary::normalize(string_view word) const 
 {
 	string cleanWord {""};
 	for (char c : word)
 	{
 		if (!isalpha(static_cast<unsigned char>(c))) continue;
 		{
-		// tolower() return int, passing a negative value = undefined behavior
+		// tolower() returns int, passing a negative value = undefined behavior
 		cleanWord.push_back(tolower(static_cast<unsigned char>(c))); 
 		}	
 	}
@@ -182,8 +277,7 @@ string Dictionary::normalize(const string &word) const
 void Dictionary::load(const string &filename)
 {
 	std::ifstream file(filename);
-
-	if (!file) throw std::runtime_error("Error: Cannot open dictionary.\n");
+	if (!file) throw std::runtime_error("Error: Cannot open external dictionary.\n");
 
 	string word;
 	while (file >> word)
@@ -194,16 +288,47 @@ void Dictionary::load(const string &filename)
 
 void Dictionary::save(const string &filename) const 
 {
-	// treat dicitonary.txt as a snapshot, not a log
 	// overwrite dictionary.txt with all words from trie
-	std::ofstream file(filename);
-	
-	if (!file) throw std::runtime_error("Error: Cannot open dictionary.\n");
+	std::ofstream file(filename);	
+	if (!file) throw std::runtime_error("Error: Cannot open internal dictionary.\n");
 	
 	// "snapshot" trie in file
 	m_trie.writeAll(file);		
 }
-/*
+
+bool Dictionary::openjson(const string &filename)
+{
+	std::ifstream file(filename);
+	if (!file) throw std::runtime_error("Error: Cannot open external dictionary.\n");
+
+	nlohmann::json data;
+	try
+	{
+		file >> data;
+	}
+	catch (const nlohmann::json::parse_error &e)
+	{
+		throw std::runtime_error("Error parsing JSON from " + filename + ": " + e.what());
+	}
+
+	// JSON file is an object where keys are words
+	if (data.is_object())
+	{
+		for (auto it = data.begin(); it != data.end(); ++it)
+		{
+			addWord(it.key());
+		}
+	}
+	else
+	{
+		std::cerr << "Error: JSON file " << filename << " does not contain a top-level object." << std::endl;
+		return false;
+	}
+
+	return true;
+}
+
+#if 0
 bool Dictionary::opencsv(const string &filename)
 {
     // open file
@@ -235,4 +360,11 @@ bool Dictionary::openxml(const string &filename)
 {
 	return true;
 }
-*/
+#endif
+
+
+
+// SPELLCHECKER CLASS //
+SpellChecker::SpellChecker(const Dictionary &dictionary) {}
+
+SpellChecker::~SpellChecker() {}
