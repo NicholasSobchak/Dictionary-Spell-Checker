@@ -8,11 +8,11 @@
 using std::cout;
 using std::endl;
 using std::string;
-using std::string_view;
+using std::string_view; // more efficient than "const string &word" for read-only scenarios (non-owning) 
 class Tester;
 
 namespace dct {
-        inline constexpr const char *g_dict {"dictionary.txt"};
+        inline constexpr const char *g_dict {"dictionary.txt"}; // inline to avoid linker errors
         inline constexpr const int g_alpha {26};
 }
 
@@ -95,13 +95,18 @@ class SpellChecker
 {
 public:
     // implement SpellChecker class here
+	explicit SpellChecker(const Dictionary &dictionary);
+	bool check(string_view word);
+	// vector<string> suggest(string_view word);
 
 private:
     // private members here
+	Dictionary m_dict;
 
     /*********************************
     // Helper declarations go here
     **********************************/
+
 };
 
 #endif
