@@ -12,7 +12,7 @@ int main()
 
 	dict.eraseAll(); // for testing purposes
 
-#if 0
+#if 1 
     // Load dictionary from JSON file
     cout << "Loading dictionary from nlohmann/words_dictionary.json..." << endl;
     if (dict.openjson("nlohmann/words_dictionary.json")) { cout << "Dictionary loaded successfully!" << endl; }
@@ -29,10 +29,9 @@ int main()
     if (dict.search("impaired")) { cout << "'impaired' found in dictionary." << endl; }
     else { cout << "'impaired' not found in dictionary." << endl; }
 #endif
-//#if 0 
+
+#if 0 
     // Original test code below this point
-    dict.addWord("had");
-    dict.addWord("hath");
     
     cout << "--- After adding had and hath ---" << endl;
     dict.dump();
@@ -52,7 +51,17 @@ int main()
     cout << "\n--- After removing hath ---" << endl;
     dict.dump();
 	dict.print();
-//#endif
+#endif
+
+#if 1
+	SpellChecker checker(dict);
+	
+    cout << "\n--- 'hath', correctly spelled ---" << endl;
+	checker.printSuggest(checker.suggest("hath"));
+
+    cout << "\n--- 'spleling', incorrectly spelled ---" << endl;
+	checker.printSuggest(checker.suggest("spleling"));
+#endif
 
 	// dict.debug();
 	// dict.dump();

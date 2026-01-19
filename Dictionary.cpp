@@ -1,7 +1,7 @@
 #include "Dictionary.h"
 
 // TRIE CLASS //
-Trie::Trie() : m_root(new TrieNode()) {}
+Trie::Trie() : m_root{new TrieNode()} {}
 
 Trie::~Trie() { deleteTrie(m_root); }
 
@@ -35,7 +35,7 @@ bool Trie::contains(string_view word) const
 {
     TrieNode *node {m_root};
 
-    // traverse to the last node in the word
+    // traverse to the last node in the word (DFS)
     for (char c : word)
     {
         int index {c - 'a'};
@@ -44,6 +44,58 @@ bool Trie::contains(string_view word) const
     }
 
     return node->m_isEndOfWord; // word not found
+}
+
+bool Trie::startsWith(string_view prefix) const
+{
+	const TrieNode *node {m_root};
+
+	// DFS
+	for (char c : prefix)
+	{
+		int index {c - 'a'};
+		if (!node || !node->m_children[index]) return false;
+		node = node->m_children[index];
+	}
+
+	return true;
+}
+
+string Trie::getPrefix(string_view word) const
+{
+	const TrieNode *node {m_root};
+	string prefix;
+
+	// DFS
+	for (char c : word)
+	{
+		int index {c - 'a'};
+		if (!node || !node->m_children[index]) break;
+		
+		prefix.push_back(c);
+		node = node->m_children[index];
+	}
+
+	return prefix;
+}
+
+void Trie::collectWithPrefix(string_view prefix, std::vector<string> &out, std::size_t limit) const
+{
+	const TrieNode *node {m_root};
+	string currentWord;
+
+	// DFS
+	for (char c : prefix)
+	{
+		int index {c - 'a'};
+		if (!node || !node->m_children[index]) return; // prefix not found
+
+		currentWord.push_back(c);
+		node = node->m_children[index];
+	}
+	
+	// build words
+	collectFromNode(node, currentWord, out, limit);
 }
 
 void Trie::writeAll(std::ostream &out) const
@@ -90,7 +142,7 @@ void Trie::deleteTrie(TrieNode *node)
 }
 
 void Trie::rewrite(const TrieNode *node, string &currentWord, std::ostream &out) const
-{ 
+{ // similar to collectFromNode 
 	if (!node) return;
 	if (node->m_isEndOfWord) out << currentWord << '\n'; // write complete word
 	
@@ -184,6 +236,23 @@ bool Trie::remove(TrieNode *&node, string_view word)
 	return false;
 }
 
+void Trie::collectFromNode(const TrieNode *node, string &currentWord, std::vector<string> &out, std::size_t limit) const
+{ // similar to rewrite
+	if (!node || out.size() >= limit) return;
+	if (node->m_isEndOfWord) out.push_back(currentWord); // add complete word to suggest vector
+
+	for (int i{0}; i < dct::g_alpha && out.size() < limit; ++i)
+	{
+		if (node->m_children[i])
+		{
+			char letter {static_cast<char>('a' + i)};
+			currentWord.push_back(letter); // build word
+			collectFromNode(node->m_children[i], currentWord, out, limit);
+			currentWord.pop_back(); // backtrack (undo complete word) works because of recursive collectFromNode 
+		}
+	}	
+}
+
 // DICTIONARY CLASS //
 Dictionary::Dictionary() { load(dct::g_dict); }
 
@@ -214,6 +283,19 @@ bool Dictionary::search(string_view word) const
 	string cleanWord {normalize(word)};
 	if (cleanWord.empty()) return false;
 	return m_trie.contains(cleanWord);
+}
+
+std::vector<string> Dictionary::prefixSuggest(string_view word) const
+{
+	std::vector<string> results;
+		
+	// word already exists in dictionary (not mispelled)	
+	if (search(word)) return results;
+
+	string prefix = m_trie.getPrefix(word); // auto??		
+	if (!prefix.empty()) m_trie.collectWithPrefix(prefix, results, dct::g_maxSuggest);
+
+	return results;
 }
 
 void Dictionary::loadTxt(const string &filename) { load(filename); }
@@ -366,7 +448,7 @@ bool Dictionary::openxml(const string &filename)
 
 
 // SPELLCHECKER CLASS //
-SpellChecker::SpellChecker(const Dictionary &dictionary) {}
+SpellChecker::SpellChecker(const Dictionary &dict) : m_dict{dict} {}
 
 SpellChecker::~SpellChecker() {}
 
@@ -375,3 +457,22 @@ bool SpellChecker::check(string_view word)
 	// returns false if word is mispelled or not found in dictionary
 	return (!m_dict.search(word) ? false : true);
 }
+
+std::vector<string> SpellChecker::suggest(string_view word) const
+{
+	return m_dict.prefixSuggest(word);	
+}
+
+void SpellChecker::printSuggest(const std::vector<string> &out) const
+{
+	if (out.empty()) 
+	{
+		cout << "Word spelled correctly";
+		return;
+	}
+
+	for (const auto &word : out)
+	{
+		cout << word << '\n';
+	}
+}	

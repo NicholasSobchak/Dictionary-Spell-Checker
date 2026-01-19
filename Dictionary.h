@@ -15,6 +15,7 @@ class Tester;
 namespace dct {
         inline constexpr const char *g_dict {"dictionary.txt"}; // inline to avoid linker errors
         inline constexpr const int g_alpha {26};
+		inline constexpr const int g_maxSuggest {10};
 }
 
 class Trie
@@ -25,6 +26,9 @@ public:
     bool insert(string_view word);
     bool remove(string &word);
     bool contains(string_view word) const;
+	bool startsWith(string_view prefix) const;
+	string getPrefix(string_view word) const;
+	void collectWithPrefix(string_view prefix, std::vector<string> &out, std::size_t limit) const;
     void writeAll(std::ostream &out) const;
     void print() const;
     void dump() const;
@@ -54,6 +58,7 @@ private:
     void rewrite(const TrieNode *node, string &currentWord, std::ostream &out) const;
     void dumpNode(const TrieNode *node, const string &prefix) const;
     bool remove(TrieNode *&node, string_view word);
+	void collectFromNode(const TrieNode *node, string &currentWord, std::vector<string> &out, std::size_t limit) const;
 };
 
 class Dictionary
@@ -66,6 +71,7 @@ public:
     bool addWord(string_view word);
     bool removeWord(string_view word);
 	bool search(string_view word) const; 
+	std::vector<string> prefixSuggest(string_view word) const;
 	void loadTxt(const string &filename);
     void print() const; 
     void dump() const;
@@ -95,15 +101,14 @@ private:
 class SpellChecker
 {
 public:
-    // implement SpellChecker class here
-	explicit SpellChecker(const Dictionary &dictionary);
+	explicit SpellChecker(const Dictionary &dict);
 	~SpellChecker();
 	bool check(string_view word);
-	// vector<string> suggest(string_view word);
+	std::vector<string> suggest(string_view word) const;
+	void printSuggest(const std::vector<string> &out) const; // placeholder to print suggestions
 
 private:
-    // private members here
-	Dictionary m_dict;
+	const Dictionary &m_dict;
 
     /*********************************
     // Helper declarations go here
