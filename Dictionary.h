@@ -33,6 +33,7 @@ public:
     void print() const;
     void dump() const;
     void clear();
+	bool empty() const;
 
 private:
     struct TrieNode {
