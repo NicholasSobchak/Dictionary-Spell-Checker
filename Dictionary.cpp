@@ -15,7 +15,8 @@ bool Trie::insert(string_view word)
         int index {c - 'a'}; // general online formula to get the numeric index - (uses ASCII value),(0-based indexing)
         
         // check if there is an existing child node
-        if (!node->m_children[index]) {
+        if (!node->m_children[index]) 
+		{
             node->m_children[index] = new TrieNode();
         }
         node = node->m_children[index];
@@ -58,13 +59,13 @@ void Trie::writeAll(std::ostream &out) const
 	rewrite(m_root, currentWord, out); // call recursive write function
 }
 
-void Trie::dumpDebug() const
+void Trie::print() const { writeAll(cout); } // same as writeAll logic
+
+void Trie::dump() const
 {
 	std::cout << "(root)\n";
     dumpNode(m_root, ""); // call recursive dump node function
 }
-
-void Trie::print() const { writeAll(cout); } // same as writeAll logic
 
 void Trie::clear()
 {
@@ -217,9 +218,9 @@ bool Dictionary::search(string_view word) const
 
 void Dictionary::loadTxt(const string &filename) { load(filename); }
 
-void Dictionary::dump() const { m_trie.print(); } 
+void Dictionary::print() const { m_trie.print(); } 
 
-void Dictionary::debug() const { m_trie.dumpDebug(); }
+void Dictionary::dump() const { m_trie.dump(); }
 
 void Dictionary::eraseAll() { m_trie.clear(); }
 
@@ -368,3 +369,9 @@ bool Dictionary::openxml(const string &filename)
 SpellChecker::SpellChecker(const Dictionary &dictionary) {}
 
 SpellChecker::~SpellChecker() {}
+
+bool SpellChecker::check(string_view word) 
+{
+	// returns false if word is mispelled or not found in dictionary
+	return (!m_dict.search(word) ? false : true);
+}

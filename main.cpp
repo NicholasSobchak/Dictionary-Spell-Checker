@@ -35,23 +35,23 @@ int main()
     dict.addWord("hath");
     
     cout << "--- After adding had and hath ---" << endl;
-    dict.debug();
     dict.dump();
+	dict.print();
 
     cout << "--- Remove tress ---" << endl;
     dict.removeWord("tress");
-    dict.debug();
     dict.dump();
+	dict.print();
 
     dict.removeWord("had");
     cout << "\n--- After removing had ---" << endl;
-    dict.debug();
     dict.dump();
+	dict.print();
 
     dict.removeWord("hath");
     cout << "\n--- After removing hath ---" << endl;
-    dict.debug();
     dict.dump();
+	dict.print();
 //#endif
 
 	// dict.debug();

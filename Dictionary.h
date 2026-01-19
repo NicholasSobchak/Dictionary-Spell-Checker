@@ -26,8 +26,8 @@ public:
     bool remove(string &word);
     bool contains(string_view word) const;
     void writeAll(std::ostream &out) const;
-    void dumpDebug() const;
     void print() const;
+    void dump() const;
     void clear();
 
 private:
@@ -67,8 +67,8 @@ public:
     bool removeWord(string_view word);
 	bool search(string_view word) const; 
 	void loadTxt(const string &filename);
-    void dump() const; // dumps trie.print()
-    void debug() const; // dumps trie.dumpDebug()
+    void print() const; 
+    void dump() const;
     void eraseAll();
     
 	// void loadInfo(const string &filename);
