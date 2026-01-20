@@ -12,8 +12,8 @@ bool Trie::insert(string_view word)
     // traverse to the last node in the word
     for (char c : word)
     {
-        int index {c - 'a'}; // general online formula to get the numeric index - (uses ASCII value),(0-based indexing)
-        
+        int index {c - 'a'}; 
+
         // check if there is an existing child node
         if (!node->m_children[index]) 
 		{
