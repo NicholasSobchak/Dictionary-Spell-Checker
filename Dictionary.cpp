@@ -125,7 +125,7 @@ void Trie::clear()
 	m_root = new TrieNode(); // initalize new root
 }
 
-bool Trie::empty() const
+bool Trie::isEmpty() const
 {
 	if (!m_root) return true;
 	if (m_root->m_isEndOfWord) return false;
@@ -253,7 +253,7 @@ bool Trie::remove(TrieNode *&node, string_view word)
 void Trie::collectFromNode(const TrieNode *node, string &currentWord, std::vector<string> &out, std::size_t limit) const
 { // similar to rewrite
 	if (!node || out.size() >= limit) return;
-	if (node->m_isEndOfWord) out.push_back(currentWord); // add complete word to suggest vector
+	if (node->m_isEndOfWord) out.push_back(currentWord); // add complete word to results vector
 
 	for (int i{0}; i < dct::g_alpha && out.size() < limit; ++i)
 	{
@@ -284,7 +284,7 @@ bool Dictionary::addWord(string_view word)
 
 bool Dictionary::removeWord(string_view word)
 {
-	if (m_trie.empty()) return false;
+	if (m_trie.isEmpty()) return false;
 
 	string cleanWord {normalize(word)};
 	if (cleanWord.empty()) return false;
@@ -296,24 +296,19 @@ bool Dictionary::removeWord(string_view word)
 
 bool Dictionary::search(string_view word) const
 {
-	if (m_trie.empty()) return false;
+	if (m_trie.isEmpty()) return false;
 
 	string cleanWord {normalize(word)};
 	if (cleanWord.empty()) return false;
 	return m_trie.contains(cleanWord);
 }
 
-std::vector<string> Dictionary::prefixSuggest(string_view word) const
+void Dictionary::suggestFromPrefix(string_view prefix, std::vector<string> &results, std::size_t limit) const 
 {
-	std::vector<string> results;
-	
-	if (m_trie.empty()) return results;	
-	if (search(word)) return results; // word already exists in dictionary (not mispelled)	
+	m_trie.collectWithPrefix(prefix, results, limit);
 
-	string prefix = m_trie.getPrefix(word); // auto??		
-	if (!prefix.empty()) m_trie.collectWithPrefix(prefix, results, dct::g_maxSuggest);
-
-	return results;
+	// remove the prefix from the results vector
+	results.erase(std::remove(results.begin(), results.end(), prefix), results.end());	
 }
 
 void Dictionary::loadTxt(const string &filename) { load(filename); }
@@ -323,6 +318,8 @@ void Dictionary::print() const { m_trie.print(); }
 void Dictionary::dump() const { m_trie.dump(); }
 
 void Dictionary::eraseAll() { m_trie.clear(); }
+
+bool Dictionary::isEmpty() const { return m_trie.isEmpty(); }
 
 #if 0
 void Dictionary::loadInfo(const string &filename)
@@ -470,24 +467,33 @@ SpellChecker::SpellChecker(const Dictionary &dict) : m_dict{dict} {}
 
 SpellChecker::~SpellChecker() {}
 
-bool SpellChecker::check(string_view word) 
+bool SpellChecker::check(string_view word) const
 {
 	// returns false if word is mispelled or not found in dictionary
 	return (!m_dict.search(word) ? false : true);
 }
 
-std::vector<string> SpellChecker::suggest(string_view word) const { return m_dict.prefixSuggest(word); }
+std::vector<string> SpellChecker::suggest(string_view prefix) const 
+{ 
+	std::vector<string> results;
+
+	if (m_dict.isEmpty()) return results;	
+
+	if (!prefix.empty()) m_dict.suggestFromPrefix(prefix, results, dct::g_maxSuggest);
+
+	return results; 
+}
 
 void SpellChecker::printSuggest(const std::vector<string> &out) const
 {
 	if (out.empty()) 
 	{
-		cout << "Word spelled correctly";
 		return;
-	}
-
-	for (const auto &word : out)
+	} else
 	{
-		cout << word << '\n';
+		for (const auto &word : out)
+		{
+			cout << "→ " << word << '\n'; 
+		}
 	}
 }	

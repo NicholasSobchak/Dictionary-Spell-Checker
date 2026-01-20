@@ -23,17 +23,20 @@ class Trie
 public:
     Trie();
     ~Trie();
+
     bool insert(string_view word);
     bool remove(string &word);
     bool contains(string_view word) const;
 	bool startsWith(string_view prefix) const;
-	string getPrefix(string_view word) const;
+	bool isEmpty() const;
+
 	void collectWithPrefix(string_view prefix, std::vector<string> &out, std::size_t limit) const;
     void writeAll(std::ostream &out) const;
     void print() const;
     void dump() const;
     void clear();
-	bool empty() const;
+
+	string getPrefix(string_view word) const;
 
 private:
     struct TrieNode {
@@ -54,11 +57,11 @@ private:
     /*********************************
     // Helper declarations go here
     **********************************/
+    bool remove(TrieNode *&node, string_view word);
 
     void deleteTrie(TrieNode *node);
     void rewrite(const TrieNode *node, string &currentWord, std::ostream &out) const;
     void dumpNode(const TrieNode *node, const string &prefix) const;
-    bool remove(TrieNode *&node, string_view word);
 	void collectFromNode(const TrieNode *node, string &currentWord, std::vector<string> &out, std::size_t limit) const;
 };
 
@@ -69,10 +72,13 @@ public:
     // implement Dictionary class here
     Dictionary();
     ~Dictionary();
+
     bool addWord(string_view word);
     bool removeWord(string_view word);
 	bool search(string_view word) const; 
-	std::vector<string> prefixSuggest(string_view word) const;
+	bool isEmpty() const;
+
+	void suggestFromPrefix(string_view prefix, std::vector<string> &results, std::size_t limit) const;
 	void loadTxt(const string &filename);
     void print() const; 
     void dump() const;
@@ -87,16 +93,18 @@ private:
     /*********************************
     // Helper declarations go here
     **********************************/
-
-    string normalize(string_view word) const;
-    void load(const string &filename);
-    void save(const string &filename) const;
-    // bool openjson(const string &filename);
+	// bool openjson(const string &filename);
     /*
     bool opencsv(const string &filename);
     bool opentsv(const string &filename);
     bool openxml(const string &filename);
     */
+
+    void load(const string &filename);
+    void save(const string &filename) const;
+
+    string normalize(string_view word) const;
+    
 };
 
 class SpellChecker
@@ -104,10 +112,15 @@ class SpellChecker
 public:
 	explicit SpellChecker(const Dictionary &dict);
 	~SpellChecker();
-	bool check(string_view word);
-	std::vector<string> suggest(string_view word) const;
-	void printSuggest(const std::vector<string> &out) const; // placeholder to print suggestions
 
+	bool check(string_view word) const;
+
+	std::vector<string> suggest(string_view prefix) const;
+	std::vector<string> correct(string_view word) const;
+
+	void printSuggest(const std::vector<string> &out) const; // placeholder to print suggestions
+	
+	string autofill(string_view word) const;
 private:
 	const Dictionary &m_dict;
 
