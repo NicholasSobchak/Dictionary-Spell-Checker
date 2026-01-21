@@ -34,6 +34,7 @@ public:
     void writeAll(std::ostream &out) const;
     void print() const;
     void dump() const;
+	void dumpWord(string_view word) const;
     void clear();
 
 	string getPrefix(string_view word) const;
@@ -82,6 +83,7 @@ public:
 	void loadTxt(const string &filename);
     void print() const; 
     void dump() const;
+	void dumpWord(string_view word) const;
     void eraseAll();
     
 	// void loadInfo(const string &filename);

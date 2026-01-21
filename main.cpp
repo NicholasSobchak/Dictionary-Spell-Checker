@@ -22,7 +22,9 @@ int main()
 
 #if 0 
     // Original test code below this point
-    
+    dict.addWord("had");
+	dict.addWord("hath");
+
     cout << "--- After adding had and hath ---" << endl;
     dict.dump();
 	dict.print();
@@ -46,9 +48,13 @@ int main()
 #if 1
 	// spell checking / autofill
 	SpellChecker checker(dict);
-	
-    cout << "\n--- suggestions for 'hath' ---" << endl;
-	checker.printSuggest(checker.suggest("hath"));
+	string input;
+	cout << "\nPlease enter a word: ";
+	cin >> input;
+
+    cout << "\n--- suggestions for " << "'" << input << "'" << " ---" << endl;
+	checker.printSuggest(checker.suggest(input));
+	dict.dumpWord(input);
 #endif
 
 	cout << '\n' << (dict.isEmpty() ? "Dictionary empty" : "Dictionary not empty") << endl;

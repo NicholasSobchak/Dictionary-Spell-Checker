@@ -115,8 +115,40 @@ void Trie::print() const { writeAll(cout); } // same as writeAll logic
 
 void Trie::dump() const
 {
-	std::cout << "(root)\n";
+	cout << "(root)\n";
     dumpNode(m_root, ""); // call recursive dump node function
+}
+
+void Trie::dumpWord(string_view word) const
+{
+	if (!contains(word)) return;
+	const TrieNode *node {m_root};
+	if (!node) return;
+
+	cout << "(root)\n";
+	size_t depth {0};
+
+	for (char c : word) 
+	{
+		int index {c - 'a'};
+
+		// print graphics
+		if (!node->m_children[index])
+		{
+			cout << string(depth * 4, ' ') 
+				<< "└── " << c << "(missing)\n";
+			return;
+		}
+
+		node = node->m_children[index];
+
+		cout << string(depth * 4, ' ') 
+			<< "└── " << c; 
+		if (node->m_isEndOfWord) cout << " *";
+
+		cout << '\n';
+		++depth;
+	}
 }
 
 void Trie::clear()
@@ -197,7 +229,7 @@ void Trie::dumpNode(const TrieNode *node, const string &prefix) const
 		}
 
 		// print graphics
-		std::cout << prefix << (isLast ? "└── " : "├── ") << letter;
+		cout << prefix << (isLast ? "└── " : "├── ") << letter;
 		if (child->m_isEndOfWord) cout << " *"; 
 		cout << '\n';
 
@@ -305,10 +337,12 @@ bool Dictionary::search(string_view word) const
 
 void Dictionary::suggestFromPrefix(string_view prefix, std::vector<string> &results, std::size_t limit) const 
 {
-	m_trie.collectWithPrefix(prefix, results, limit);
+	string cleanPrefix {normalize(prefix)};
+	if (cleanPrefix.empty()) return;
+	m_trie.collectWithPrefix(cleanPrefix, results, limit+1); // LOGIC ERROR: (off by 1) - balance the prefix being removed from the results
 
 	// remove the prefix from the results vector
-	results.erase(std::remove(results.begin(), results.end(), prefix), results.end());	
+	results.erase(std::remove(results.begin(), results.end(), prefix), results.end());
 }
 
 void Dictionary::loadTxt(const string &filename) { load(filename); }
@@ -316,6 +350,8 @@ void Dictionary::loadTxt(const string &filename) { load(filename); }
 void Dictionary::print() const { m_trie.print(); } 
 
 void Dictionary::dump() const { m_trie.dump(); }
+
+void Dictionary::dumpWord(string_view word) const { m_trie.dumpWord(word); }
 
 void Dictionary::eraseAll() { m_trie.clear(); }
 
@@ -478,10 +514,22 @@ std::vector<string> SpellChecker::suggest(string_view prefix) const
 	std::vector<string> results;
 
 	if (m_dict.isEmpty()) return results;	
-
+	
 	if (!prefix.empty()) m_dict.suggestFromPrefix(prefix, results, dct::g_maxSuggest);
 
 	return results; 
+}
+
+std::vector<string> SpellChecker::correct(string_view word) const 
+{
+	std::vector<string> results;
+	return results;
+}
+
+string SpellChecker::autofill(string_view word) const 
+{
+	string result {word};
+	return result;
 }
 
 void SpellChecker::printSuggest(const std::vector<string> &out) const
@@ -496,4 +544,4 @@ void SpellChecker::printSuggest(const std::vector<string> &out) const
 			cout << "→ " << word << '\n'; 
 		}
 	}
-}	
+}
