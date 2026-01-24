@@ -1,11 +1,11 @@
-#include "../include/Dictionary.h"
+#include "Dictionary.h"
 
 // TRIE CLASS //
 Trie::Trie() : m_root{new TrieNode()} {}
 
 Trie::~Trie() { deleteTrie(m_root); }
 
-bool Trie::insert(string_view word)
+bool Trie::insert(string_view word, int word_id)
 {
     TrieNode *node {m_root};
 
@@ -26,6 +26,7 @@ bool Trie::insert(string_view word)
     if (node->m_isEndOfWord) return false;
 
     node->m_isEndOfWord = true;
+	node->m_word_id = word_id;
     return true;
 }
 
@@ -300,23 +301,29 @@ void Trie::collectFromNode(const TrieNode *node, string &currentWord, std::vecto
 }
 
 // DICTIONARY CLASS //
-Dictionary::Dictionary() { load(dct::g_dict); }
+Dictionary::Dictionary() : m_db{dct::g_dictDb}
+{
+	m_db.createTables();	
+	loadDb(m_db); 
+}
 
-Dictionary::~Dictionary() { save(dct::g_dict); } // treat dicitonary.txt as a snapshot of trie, not a log
+Dictionary::~Dictionary() {}
 
-bool Dictionary::addWord(string_view word, Database &db)
+bool Dictionary::addWord(string_view word)
 {
 	string cleanWord {normalize(word)};
 	if (cleanWord.empty()) return false;
-	
-	if (!m_trie.insert(cleanWord)) return false;
-	if (!db.insertWord(string(word))) return false;
+
+	int word_id = m_db.insertWord(cleanWord);
+	if (word_id <= 0) return false;
+
+	if (!m_trie.insert(cleanWord, word_id)) return false;
 
 	return true;	
 }
 
-bool Dictionary::removeWord(string_view word, Database &db)
-{
+bool Dictionary::removeWord(string_view word)
+{ // implement remove from db
 	if (m_trie.isEmpty()) return false;
 
 	string cleanWord {normalize(word)};
@@ -346,21 +353,7 @@ void Dictionary::suggestFromPrefix(string_view prefix, std::vector<string> &resu
 	results.erase(std::remove(results.begin(), results.end(), prefix), results.end());
 }
 
-void Dictionary::loadFromDb(Database &db) 
-{
-    sqlite3* sqlDB = db.getDB();
-    sqlite3_stmt* stmt;
-    const char* query = "SELECT lemma FROM words;";
-    sqlite3_prepare_v2(sqlDB, query, -1, &stmt, nullptr);
-    while (sqlite3_step(stmt) == SQLITE_ROW) 
-	{
-        const unsigned char* text = sqlite3_column_text(stmt, 0);
-        m_trie.insert(reinterpret_cast<const char*>(text));
-    }
-    sqlite3_finalize(stmt);
-}
-
-void Dictionary::loadTxt(const string &filename) { load(filename); }
+// void Dictionary::loadTxt(const string &filename) { load(filename); } // expendable
 
 void Dictionary::print() const { m_trie.print(); } 
 
@@ -423,6 +416,88 @@ string Dictionary::normalize(string_view word) const
 	return cleanWord;
 }
 
+void Dictionary::loadDb(Database &db) 
+{
+    sqlite3* sqlDB = m_db.getDB();
+    sqlite3_stmt* stmt;
+    const char* query = "SELECT lemma FROM words;";
+    sqlite3_prepare_v2(sqlDB, query, -1, &stmt, nullptr);
+    while (sqlite3_step(stmt) == SQLITE_ROW) 
+	{
+        const unsigned char* text = sqlite3_column_text(stmt, 0);
+        m_trie.insert(reinterpret_cast<const char*>(text));
+    }
+    sqlite3_finalize(stmt);
+}
+
+bool Dictionary::openjson(const string &filename)
+{	
+	std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Cannot open " << filename << "\n";
+        return false;
+    }
+
+    string line;
+
+    while (std::getline(file, line))
+    {
+        try
+        {
+            nlohmann::json j = nlohmann::json::parse(line);
+
+            if (!j.contains("word")) continue;
+
+            string lemma = j["word"];
+            int word_id = db.insertWord(lemma);
+
+            // add to trie
+            addWord(lemma, word_id);
+
+            // definitions
+            if (j.contains("senses"))
+            {
+                for (auto& sense : j["senses"])
+                {
+                    if (sense.contains("glosses"))
+                    {
+                        for (auto& g : sense["glosses"])
+                        {
+                            db.insertSense(word_id,
+                                           j.value("pos", ""),
+                                           g.get<string>());
+                        }
+                    }
+                }
+            }
+
+            // etymology
+            if (j.contains("etymology_text"))
+            {
+                db.insertEtymology(word_id, j["etymology_text"]);
+            }
+
+            // forms (plural & alt spellings)
+            if (j.contains("forms"))
+            {
+                for (auto& f : j["forms"])
+                {
+                    std::string form = f["form"];
+                    std::string tag = f["tags"][0];
+                    db.insertForm(word_id, form, tag);
+                }
+            }
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Skipping bad line: " << e.what() << "\n";
+        }
+    }
+
+    return true;
+}
+
+#if 0
 void Dictionary::load(const string &filename)
 {
 	std::ifstream file(filename);
@@ -445,39 +520,6 @@ void Dictionary::save(const string &filename) const
 	m_trie.writeAll(file);		
 }
 
-bool Dictionary::openjson(const string &filename)
-{
-	std::ifstream file(filename);
-	if (!file) throw std::runtime_error("Error: Cannot open external dictionary.\n");
-
-	nlohmann::json data;
-	try
-	{
-		file >> data;
-	}
-	catch (const nlohmann::json::parse_error &e)
-	{
-		throw std::runtime_error("Error parsing JSON from " + filename + ": " + e.what());
-	}
-
-	// JSON file is an object where keys are words
-	if (data.is_object())
-	{
-		for (auto it = data.begin(); it != data.end(); ++it)
-		{
-			addWord(it.key());
-		}
-	}
-	else
-	{
-		std::cerr << "Error: JSON file " << filename << " does not contain a top-level object." << std::endl;
-		return false;
-	}
-
-	return true;
-}
-
-#if 0
 bool Dictionary::opencsv(const string &filename)
 {
     // open file

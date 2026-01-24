@@ -11,6 +11,9 @@ public:
 	Database(const std::string &filename);
 	~Database();
 
+	bool insertEtymology(int word_id, const std::string &etymology[]);
+	bool insertForm(int word_id, const std::string &form, const std::string &tag);
+
 	void createTables();
 	void insertSense(int word_id, const std::string &pos, const std::string &definition);
 

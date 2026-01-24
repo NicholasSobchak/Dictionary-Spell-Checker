@@ -14,7 +14,8 @@ using std::string_view; // more efficient than "const string &word" for read-onl
 class Tester;
 
 namespace dct {
-        inline constexpr const char *g_dict {"dictionary.txt"}; // inline to avoid linker errors
+        inline constexpr const char *g_dictTxt {"dictionary.txt"}; // inline to avoid linker errors
+        inline constexpr const char *g_dictDb {"dictionary.db"}; // inline to avoid linker errors
         inline constexpr const int g_alpha {26};
 		inline constexpr const int g_maxSuggest {10};
 }
@@ -25,7 +26,7 @@ public:
     Trie();
     ~Trie();
 
-    bool insert(string_view word);
+    bool insert(string_view word, int word_id);
     bool remove(string &word);
     bool contains(string_view word) const;
 	bool startsWith(string_view prefix) const;
@@ -43,7 +44,8 @@ public:
 private:
     struct TrieNode {
         TrieNode *m_children[26];
-        bool m_isEndOfWord{false};
+        bool m_isEndOfWord {false};
+		int m_word_id {0};
 
         TrieNode()
         {
@@ -75,21 +77,21 @@ public:
     Dictionary();
     ~Dictionary();
 	// IMPLEMENT DATABASE INTO DICTIONARY CLASS
-    bool addWord(string_view word, Database &db);
-    bool removeWord(string_view word, Database &db); // implement databse logic
+    bool addWord(string_view word);
+    bool removeWord(string_view word); // implement databse logic
 	bool search(string_view word) const; 
 	bool isEmpty() const;
 
 	void suggestFromPrefix(string_view prefix, std::vector<string> &results, std::size_t limit) const;
-	void loadTxt(const string &filename); // implement database to load
     void print() const; 
     void dump() const;
 	void dumpWord(string_view word) const;
     void eraseAll();
-	void loadFromDb(Database &db);
-    
+   
+    // expendable	
 	// void loadInfo(const string &filename);
-    bool openjson(const string &filename); // make public for now
+    bool openjson(const string &filename); // make public for now (load into db)
+	void loadTxt(const string &filename); 
 
 private:
 	struct WordInfo
@@ -99,6 +101,7 @@ private:
 	};
 
     Trie m_trie;
+	Database m_db;
 
     /*********************************
     // Helper declarations go here
@@ -110,6 +113,9 @@ private:
     bool openxml(const string &filename);
     */
 
+	void loadDb(Database &db);
+
+	// expendable
     void load(const string &filename);
     void save(const string &filename) const;
 

@@ -1,5 +1,5 @@
 // Fall 2025 - Dictionary/Spell Checker - Collaborative Project
-#include "include/Dictionary.h"
+#include "Dictionary.h"
 using namespace std;
 
 class Tester
@@ -9,11 +9,11 @@ class Tester
 int main()
 {
     Dictionary dict;
-#if 0 // implement dictionary into database
+#if 1 // implement dictionary into database
 	dict.eraseAll(); // for testing purposes
 	cout << (dict.isEmpty() ? "Dictionary empty" : "Dictionary not empty") << '\n' << endl;
 
-#if 1 
+#if 0 
     // Load dictionary from JSON file
     cout << "Loading dictionary from nlohmann/words_dictionary.json..." << endl;
     if (dict.openjson("nlohmann/words_dictionary.json")) { cout << "Dictionary loaded successfully!" << endl; }
