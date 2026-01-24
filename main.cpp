@@ -1,5 +1,5 @@
 // Fall 2025 - Dictionary/Spell Checker - Collaborative Project
-#include "Dictionary.h"
+#include "include/Dictionary.h"
 using namespace std;
 
 class Tester
@@ -9,7 +9,7 @@ class Tester
 int main()
 {
     Dictionary dict;
-
+#if 0 // implement dictionary into database
 	dict.eraseAll(); // for testing purposes
 	cout << (dict.isEmpty() ? "Dictionary empty" : "Dictionary not empty") << '\n' << endl;
 
@@ -60,6 +60,7 @@ int main()
 	cout << '\n' << (dict.isEmpty() ? "Dictionary empty" : "Dictionary not empty") << endl;
 	// dict.debug();
 	// dict.dump();
-	
+
+#endif // implement database into dictionary	
     return 0;
 }

@@ -1,6 +1,7 @@
 #ifndef DICTIONARY_H
 #define DICTIONARY_H
-#include "nlohmann/json.hpp"
+#include "Database.h"
+#include "../nlohmann/json.hpp"
 #include <string_view>
 #include <fstream>
 #include <filesystem>
@@ -73,23 +74,30 @@ public:
     // implement Dictionary class here
     Dictionary();
     ~Dictionary();
-
-    bool addWord(string_view word);
-    bool removeWord(string_view word);
+	// IMPLEMENT DATABASE INTO DICTIONARY CLASS
+    bool addWord(string_view word, Database &db);
+    bool removeWord(string_view word, Database &db); // implement databse logic
 	bool search(string_view word) const; 
 	bool isEmpty() const;
 
 	void suggestFromPrefix(string_view prefix, std::vector<string> &results, std::size_t limit) const;
-	void loadTxt(const string &filename);
+	void loadTxt(const string &filename); // implement database to load
     void print() const; 
     void dump() const;
 	void dumpWord(string_view word) const;
     void eraseAll();
+	void loadFromDb(Database &db);
     
 	// void loadInfo(const string &filename);
     bool openjson(const string &filename); // make public for now
 
 private:
+	struct WordInfo
+	{
+		string lemma;
+		std::vector<string> senses;
+	};
+
     Trie m_trie;
 
     /*********************************

@@ -1,4 +1,4 @@
-#include "Dictionary.h"
+#include "../include/Dictionary.h"
 
 // TRIE CLASS //
 Trie::Trie() : m_root{new TrieNode()} {}
@@ -304,17 +304,18 @@ Dictionary::Dictionary() { load(dct::g_dict); }
 
 Dictionary::~Dictionary() { save(dct::g_dict); } // treat dicitonary.txt as a snapshot of trie, not a log
 
-bool Dictionary::addWord(string_view word)
+bool Dictionary::addWord(string_view word, Database &db)
 {
 	string cleanWord {normalize(word)};
 	if (cleanWord.empty()) return false;
 	
 	if (!m_trie.insert(cleanWord)) return false;
+	if (!db.insertWord(string(word))) return false;
 
 	return true;	
 }
 
-bool Dictionary::removeWord(string_view word)
+bool Dictionary::removeWord(string_view word, Database &db)
 {
 	if (m_trie.isEmpty()) return false;
 
@@ -343,6 +344,20 @@ void Dictionary::suggestFromPrefix(string_view prefix, std::vector<string> &resu
 
 	// remove the prefix from the results vector
 	results.erase(std::remove(results.begin(), results.end(), prefix), results.end());
+}
+
+void Dictionary::loadFromDb(Database &db) 
+{
+    sqlite3* sqlDB = db.getDB();
+    sqlite3_stmt* stmt;
+    const char* query = "SELECT lemma FROM words;";
+    sqlite3_prepare_v2(sqlDB, query, -1, &stmt, nullptr);
+    while (sqlite3_step(stmt) == SQLITE_ROW) 
+	{
+        const unsigned char* text = sqlite3_column_text(stmt, 0);
+        m_trie.insert(reinterpret_cast<const char*>(text));
+    }
+    sqlite3_finalize(stmt);
 }
 
 void Dictionary::loadTxt(const string &filename) { load(filename); }

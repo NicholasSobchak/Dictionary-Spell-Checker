@@ -1,6 +1,10 @@
 # Compiler
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -g
+LIBS = -lsqlite3
+
+all:
+	$(CXX) main.cpp src/Dictionary.cpp -o dict $(CXXFLAGS) $(LIBS)
 
 # Target executable
 TARGET = spellchecker
