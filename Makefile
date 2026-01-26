@@ -3,13 +3,31 @@ CXX = g++
 CXXFLAGS = -std=c++17 -Wall -g -Iinclude
 LIBS = -lsqlite3
 
-# Files
-SRC = main.cpp src/Dictionary.cpp src/Database.cpp
+# Executable name
 TARGET = dict
 
-all:
-	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET) $(LIBS)
+# Source files
+SRCS = main.cpp \
+       src/Dictionary.cpp \
+       src/Trie.cpp \
+	   src/SpellChecker.cpp \
+       src/Database.cpp
 
+# Object files (auto-generated from SRCS)
+OBJS = $(SRCS:.cpp=.o)
+
+# Default target
+all: $(TARGET)
+
+# Link step
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
+
+# Compile step (this is the magic)
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Clean build files
 clean:
-	rm -f $(TARGET)
+	rm -f $(OBJS) $(TARGET)
 

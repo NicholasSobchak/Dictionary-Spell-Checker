@@ -1,6 +1,6 @@
 // Fall 2025 - Dictionary/Spell Checker - Collaborative Project
 #include "Dictionary.h"
-using namespace std;
+#include "SpellChecker.h"
 
 class Tester
 {
@@ -11,7 +11,7 @@ int main()
     Dictionary dict;
 #if 1 // implement dictionary into database
 	dict.eraseAll(); // for testing purposes
-	cout << (dict.isEmpty() ? "Dictionary empty" : "Dictionary not empty") << '\n' << endl;
+	std::cout << (dict.isEmpty() ? "Dictionary empty" : "Dictionary not empty") << '\n' << std::endl;
 
 #if 0 
     // Load dictionary from JSON file
@@ -48,16 +48,16 @@ int main()
 #if 1
 	// spell checking / autofill
 	SpellChecker checker(dict);
-	string input;
-	cout << "\nPlease enter a word: ";
-	cin >> input;
+	std::string input;
+	std::cout << "\nPlease enter a word: ";
+	std::cin >> input;
 
-    cout << "\n--- suggestions for " << "'" << input << "'" << " ---" << endl;
+	std::cout << "\n--- suggestions for " << "'" << input << "'" << " ---" << std::endl;
 	checker.printSuggest(checker.suggest(input));
 	dict.dumpWord(input);
 #endif
 
-	cout << '\n' << (dict.isEmpty() ? "Dictionary empty" : "Dictionary not empty") << endl;
+	std::cout << '\n' << (dict.isEmpty() ? "Dictionary empty" : "Dictionary not empty") << std::endl;
 	// dict.debug();
 	// dict.dump();
 

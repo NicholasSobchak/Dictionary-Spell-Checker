@@ -1,0 +1,11 @@
+#ifndef UTILS_H
+#define UTLS_H
+
+namespace dct 
+{
+        inline constexpr const char *g_dictTxt {"dictionary.txt"}; // inline to avoid linker errors
+        inline constexpr const char *g_dictDb {"dictionary.db"}; // inline to avoid linker errors
+        inline constexpr const int g_alpha {26};
+	    inline constexpr const int g_maxSuggest {10};
+}
+#endif

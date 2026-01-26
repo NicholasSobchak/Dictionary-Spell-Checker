@@ -1,0 +1,57 @@
+#ifndef TRIE_H
+#define TRIE_H
+#include <string_view>
+#include <ostream>
+#include <vector>
+#include <string>
+#include <iostream>
+
+class Trie
+{
+public:
+    Trie();
+    ~Trie();
+
+    bool insert(std::string_view word, int word_id);
+    bool remove(std::string &word);
+    bool contains(std::string_view word) const;
+	bool startsWith(std::string_view prefix) const;
+	bool isEmpty() const;
+
+	void collectWithPrefix(std::string_view prefix, std::vector<std::string> &out, std::size_t limit) const;
+    void writeAll(std::ostream &out) const;
+    void print() const;
+    void dump() const;
+	void dumpWord(std::string_view word) const;
+    void clear();
+
+	std::string getPrefix(std::string_view word) const;
+
+private:
+    struct TrieNode {
+        TrieNode *m_children[26];
+        bool m_isEndOfWord {false};
+		int m_wordID {-1};
+
+        TrieNode()
+        {
+            for (int i = 0; i < 26; ++i)
+            {
+                m_children[i] = nullptr;
+            }
+        }
+    };
+
+    TrieNode *m_root;
+
+    /*********************************
+    // Helper declarations go here
+    **********************************/
+    bool remove(TrieNode *&node, std::string_view word);
+
+    void deleteTrie(TrieNode *node);
+    void rewrite(const TrieNode *node, std::string &currentWord, std::ostream &out) const;
+    void dumpNode(const TrieNode *node, const std::string &prefix) const;
+	void collectFromNode(const TrieNode *node, std::string &currentWord, std::vector<std::string> &out, std::size_t limit) const;
+};
+#endif
