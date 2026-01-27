@@ -12,17 +12,61 @@ sqlite3* Database::getDB() { return db; }
 
 void Database::createTables() 
 {
-    const char* sql {
+	/*
+        Word
+	    ├── Etymology (one)
+        └── Senses (many)
+            ├── Definition (one)
+	        ├── POS (part of speech) (one)
+	        ├── Examples (many)
+            ├── Synonyms (many)
+            └── Antonyms (many)
+	*/
+
+    const char* sql 
+	{
         "CREATE TABLE IF NOT EXISTS words ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT,"
         "lemma TEXT UNIQUE);"
-
-        "CREATE TABLE IF NOT EXISTS senses ("
+	    
+	    "CREATE TABLE IF NOT EXISTS etymologys ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "word_id INTEGER,"
+        "word_id INTEGER NOT NULL,"
+        "etymology TEXT NOT NULL,"
+        "FOREIGN KEY(word_id) REFERENCES words(id) ON DELETE CASCADE);"
+        
+	    "CREATE TABLE IF NOT EXISTS forms ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "word_id INTEGER NOT NULL,"
+        "form TEXT NOT NULL,"
+	    "tag TEXT,"
+        "FOREIGN KEY(word_id) REFERENCES words(id) ON DELETE CASCADE);"     
+        
+	    "CREATE TABLE IF NOT EXISTS senses ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "word_id INTEGER NOT NULL,"
         "pos TEXT,"
-        "definition TEXT,"
-        "FOREIGN KEY(word_id) REFERENCES words(id));"};
+        "definition TEXT NOT NULL,"
+        "FOREIGN KEY(word_id) REFERENCES words(id) ON DELETE CASCADE);"
+	    	
+	    "CREATE TABLE IF NOT EXISTS examples ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "sense_id INTEGER NOT NULL,"
+        "example TEXT NOT NULL,"
+        "FOREIGN KEY(sense_id) REFERENCES senses(id) ON DELETE CASCADE);"
+	    
+        "CREATE TABLE IF NOT EXISTS synonyms ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "sense_id INTEGER NOT NULL,"
+        "synonym TEXT,"
+        "FOREIGN KEY(sense_id) REFERENCES senses(id) ON DELETE CASCADE);"
+        
+	    "CREATE TABLE IF NOT EXISTS antonyms ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "sense_id INTEGER NOT NULL,"
+        "antonyms TEXT,"
+        "FOREIGN KEY(sense_id) REFERENCES senses(id) ON DELETE CASCADE);"
+	};
 
     char* errMsg {nullptr};
     sqlite3_exec(db, sql, nullptr, nullptr, &errMsg);
@@ -57,6 +101,16 @@ bool Database::insertWord(const std::string& lemma)
     return true; // word inserted successfully
 }
 
+bool Database::insertEtymology(int word_id, const std::vector<std::string> &etymology)
+{ // implement
+	return true;
+}	
+
+bool Database::insertForm(int word_id, const std::string &form, const std::string &tag)
+{ // implement
+	return true;
+}
+
 bool Database::insertSense(int word_id, const std::string& pos, const std::string& definition) 
 {
     sqlite3_stmt* stmt;
@@ -73,12 +127,17 @@ bool Database::insertSense(int word_id, const std::string& pos, const std::strin
 	return true;
 }
 
-bool Database::insertEtymology(int word_id, const std::vector<std::string> &etymology)
+bool Database::insertExample(int word_id, const std::string &example)
 { // implement
 	return true;
-}	
+}
 
-bool Database::insertForm(int word_id, const std::string &form, const std::string &tag)
+bool Database::insertSynonym(int word_id, const std::string &synonym)
+{ // implement
+	return true;
+}
+
+bool Database::insertAntonym(int word_id, const std::string &antonym)
 { // implement
 	return true;
 }
@@ -86,28 +145,6 @@ bool Database::insertForm(int word_id, const std::string &form, const std::strin
 bool Database::removeWord(int word_id)
 { // implement
 	return false;
-}
-
-std::string Database::getLemma(int word_id)
-{ // impelement
-	return "";
-}
-
-std::vector<std::string> Database::getSenses(int word_id)
-{ // implement
-	std::vector<std::string> result;
-	return result;
-}
-
-std::vector<std::string> Database::getEtymology(int word_id)
-{ // implement
-	std::vector<std::string> result;
-	return result;
-}
-
-std::string getPos(int word_id)
-{ // implement
-	return "";
 }
 
 int Database::getWordID(const std::string &lemma)

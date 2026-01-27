@@ -17,17 +17,17 @@ public:
 
 	// inserters
 	bool insertWord(const std::string &lemma);
-	bool insertSense(int word_id, const std::string &pos, const std::string &definition);
 	bool insertEtymology(int word_id, const std::vector<std::string> &etymology);
 	bool insertForm(int word_id, const std::string &form, const std::string &tag);
+	bool insertSense(int word_id, const std::string &pos, const std::string &definition);
+	bool insertExample(int word_id, const std::string &example);
+	bool insertSynonym(int word_id, const std::string &synonym);
+	bool insertAntonym(int word_id, const std::string &antonym);
+
 	bool removeWord(int word_id); // implement
 	
 	// getters
 	sqlite3 *getDB();
-	std::string getLemma(int word_id);
-	std::vector<std::string> getSenses(int word_id); 
-	std::vector<std::string> getEtymology(int word_id); 
-	std::string getPos(int word_id); 	
 	int getWordID(const std::string &lemma);
 
 private:

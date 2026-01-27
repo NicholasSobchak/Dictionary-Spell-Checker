@@ -27,21 +27,36 @@ public:
     void dump() const;
 	void dumpWord(std::string_view word) const;
     void eraseAll();
-   
-    // expendable	
-	// void loadInfo(const string &filename);
-    bool openjson(const std::string &filename); // make public for now (load into db)
-	void loadTxt(const std::string &filename); 
+	void loadInfo(const std::string &filename);
+  
+	// getters
+	
 
 private:
 	// represent word info from the db in memory
 	struct WordInfo
 	{
-		std::string lemma;
-        std::vector<std::string> senses;
+       	std::string lemma; // word
 	    std::vector<std::string> etymology;
-		std::string pos;
 	    int id{-1}; // ??
+        
+	    // plurals or alternative spellings
+	    struct Form
+        {
+	    	std::string form;
+	    	std::string tag;
+	    };
+	    std::vector<Form> forms; 
+        
+	    struct Sense
+	 	{
+	 	    std::string pos; // noun, verb, adj, etc.
+	 	    std::string definition;
+	 	    std::vector<std::string> examples;
+      	    std::vector<std::string> synonyms;
+     	    std::vector<std::string> antonyms;
+     	};
+	    std::vector<Sense> senses; // acts a 'cache'
 	};
 
     Trie m_trie;
@@ -50,18 +65,10 @@ private:
     /*********************************
     // Helper declarations go here
     **********************************/
-	// bool openjson(const string &filename);
-    /*
-    bool opencsv(const string &filename);
-    bool opentsv(const string &filename);
-    bool openxml(const string &filename);
-    */
-
-	void loadDb(Database &db);
-
-	// expendable
-    void load(const std::string &filename);
-    void save(const std::string &filename) const;
+	
+    bool loadjson(const std::string &filename); // make public for now (load into db)
+	
+	void buildTrie(Database &db); // implement lemma logic
 
 	std::string normalize(std::string_view word) const; 
 };

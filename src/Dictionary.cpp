@@ -4,7 +4,7 @@
 Dictionary::Dictionary() : m_db{dct::g_dictDb}
 {
 	m_db.createTables();	
-	loadDb(m_db); 
+	buildTrie(m_db); // implement lemma logic 
 }
 
 bool Dictionary::addWord(std::string_view word)
@@ -66,8 +66,7 @@ void Dictionary::eraseAll() { m_trie.clear(); }
 
 bool Dictionary::isEmpty() const { return m_trie.isEmpty(); }
 
-#if 0
-void Dictionary::loadInfo(const string &filename)
+void Dictionary::loadInfo(const std::string &filename)
 {
 	/*
 	   compatible file type:
@@ -77,12 +76,22 @@ void Dictionary::loadInfo(const string &filename)
         .xml
 	*/
 	// parse filename
-	size_t p {filename.find_last_of('.')};
-	string extension {""};
+	std::size_t p {filename.find_last_of('.')};
+	std::string extension {""};
 
-	if (p == string::npos) cout << "Error: file has no extension!" << endl;
+	if (p == std::string::npos) std::cout << "Error: file has no extension!" << std::endl;
 	else extension = filename.substr(p);
 
+	// temporary
+	if (extension == ".json")
+	{
+	    loadjson(filename);
+	} else
+	{
+		std::cout << "Error: file extension not recognized." << std::endl;
+	}
+
+#if 0
 	// control file calls
 	if (extension == ".csv") 
 		opencsv(filename); // .csv
@@ -96,9 +105,9 @@ void Dictionary::loadInfo(const string &filename)
 	else if (extension == ".xml") 
 		openxml(filename); // .xml
 	
-	else cout << "Error: file extension not recognized." << endl;
-}
+	else std::cout << "Error: file extension not recognized." << std::endl;
 #endif
+}
 
 /*********************************
 // Dictionary Helper Functions
@@ -117,7 +126,7 @@ std::string Dictionary::normalize(std::string_view word) const
 	return cleanWord;
 }
 
-void Dictionary::loadDb(Database &db) 
+void Dictionary::buildTrie(Database &db) 
 {
     sqlite3* sqlDB = m_db.getDB();
     sqlite3_stmt* stmt;
@@ -132,7 +141,7 @@ void Dictionary::loadDb(Database &db)
     sqlite3_finalize(stmt);
 }
 
-bool Dictionary::openjson(const std::string &filename)
+bool Dictionary::loadjson(const std::string &filename)
 {	
 	std::ifstream file(filename);
 	if (!file) throw std::runtime_error("Error: Cannot open external dictionary.\n");
@@ -144,48 +153,107 @@ bool Dictionary::openjson(const std::string &filename)
         {
             nlohmann::json j = nlohmann::json::parse(line);
 
+            // skip entries without a word
             if (!j.contains("word")) continue;
 
-            // add to trie & db
-			std::string lemma = j["word"];
-            addWord(lemma); 
-			int word_id = m_db.getWordID(lemma);
+			// retrieve json word data into "word" and insert into DB
+            WordInfo word;
+            word.lemma = j["word"];
 
-            // definitions
-            if (j.contains("senses"))
-            {
-                for (auto& sense : j["senses"])
-                {
-                    if (sense.contains("glosses"))
-                    {
-                        for (auto& g : sense["glosses"])
-                        {
-                            m_db.insertSense(word_id,
-                                           j.value("pos", ""),
-                                           g.get<std::string>());
-                        }
-                    }
-                }
-            }
+            // insert into trie and database
+            addWord(word.lemma);
 
-            // etymology
+            // get word_id from database
+            word.id = m_db.getWordID(word.lemma);
+
+            // Etymology
             if (j.contains("etymology_text"))
             {
-			    continue; // delete
-                m_db.insertEtymology(word_id, j["etymology_text"]);
+                std::string etymology = j["etymology_text"];
+                
+				// split by lines into vector
+                std::istringstream ety_stream(etymology);
+                std::string ety_line;
+                while (std::getline(ety_stream, ety_line))
+                    word.etymology.push_back(ety_line); // build the etymology vector
+
+                m_db.insertEtymology(word.id, word.etymology);
             }
 
-            // forms (plural & alt spellings)
+            // Forms (plurals, alt spellings)
             if (j.contains("forms"))
             {
-				continue; // delete
-                for (auto& f : j["forms"])
+                for (auto &f : j["forms"])
                 {
-                    std::string form = f["form"];
-                    std::string tag = f["tags"][0];
-                    m_db.insertForm(word_id, form, tag);
+                    WordInfo::Form form;
+                    
+					// Form
+                    form.form = f.value("form", "");
+
+					// Tag (if there is one)
+                    form.tag = f.contains("tags") && !f["tags"].empty() ? f["tags"][0].get<std::string>() : "";
+                    word.forms.push_back(form); // vector of Forms for autocomplete / sepllchecking
+
+                    m_db.insertForm(word.id, form.form, form.tag);
                 }
             }
+
+            // Senses
+            if (j.contains("senses"))
+            {
+                for (auto &sense_json : j["senses"])
+                {
+                    WordInfo::Sense sense;
+
+                    // POS (part of speech)
+                    sense.pos = sense_json.value("pos", j.value("pos", ""));
+
+                    // Definitions / glosses
+                    if (sense_json.contains("glosses"))
+                    {
+                        for (auto &g : sense_json["glosses"])
+                            sense.definition += g.get<std::string>() + " "; // concatenate multiple glosses
+                    }
+
+                    // Examples
+                    if (sense_json.contains("examples"))
+                    {
+                        for (auto &ex : sense_json["examples"])
+                            sense.examples.push_back(ex.get<std::string>()); // build examples vector
+                    }
+
+                    // Synonyms
+                    if (sense_json.contains("synonyms"))
+                    {
+                        for (auto &syn : sense_json["synonyms"])
+                            sense.synonyms.push_back(syn.get<std::string>()); // build synonyms vector
+                    }
+
+                    // Antonyms
+                    if (sense_json.contains("antonyms"))
+                    {
+                        for (auto &ant : sense_json["antonyms"])
+                            sense.antonyms.push_back(ant.get<std::string>()); // build antonyms vector
+                    }
+
+                    word.senses.push_back(sense); // vector of senses for potentinal quick lookups
+
+                    // Insert into DB
+                    m_db.insertSense(word.id, sense.pos, sense.definition);
+
+                    for (const auto &ex : sense.examples)
+                        m_db.insertExample(word.id, ex);
+
+                    for (const auto &syn : sense.synonyms)
+                        m_db.insertSynonym(word.id, syn);
+
+                    for (const auto &ant : sense.antonyms)
+                        m_db.insertAntonym(word.id, ant);
+                }
+            }
+
+			// ADD TO DICTIONARY??	
+			//m_words[word.lemma] = word; // add to Dictionary storage??? (map<string, WordInfo>)
         }
         catch (const std::exception& e)
         {
@@ -195,59 +263,3 @@ bool Dictionary::openjson(const std::string &filename)
 
     return true;
 }
-
-#if 0
-void Dictionary::load(const string &filename)
-{
-	std::ifstream file(filename);
-	if (!file) throw std::runtime_error("Error: Cannot open external dictionary.\n");
-
-	string word;
-	while (file >> word)
-	{
-		addWord(word);
-	}
-}
-
-void Dictionary::save(const string &filename) const 
-{
-	// overwrite dictionary.txt with all words from trie
-	std::ofstream file(filename);	
-	if (!file) throw std::runtime_error("Error: Cannot open internal dictionary.\n");
-	
-	// "snapshot" trie in file
-	m_trie.writeAll(file);		
-}
-
-bool Dictionary::opencsv(const string &filename)
-{
-    // open file
-    std::ifstream file(filename);
-	if (!file) throw std::runtime_error("Error: Cannot open file.");
-
-    // load information
-
-	return true;
-}
-
-bool Dictionary::opentsv(const string &filename)                                
-{
-	// open file
-	std::ifstream file(filename);
-	if (!file) throw std::runtime_error("Error: Cannot open file.");
-	
-	// load information
-
-	return true;
-}
-
-bool Dictionary::openjson(const string &filename)
-{
-	return true;
-}
-
-bool Dictionary::openxml(const string &filename)
-{
-	return true;
-}
-#endif
