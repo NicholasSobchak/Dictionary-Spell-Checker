@@ -1,23 +1,40 @@
-# Dictionary-Spell-Checker
-The Spell Checker is a C++ application that uses a Trie (prefix) tree to identify and search a large collection of English words i.e. 20,000 words. The program loads a dictionary file that is identified by a Trie tree, allowing the user to quickly check whether a given word is spelled correctly. If a word is not found, the program can suggest corrections based on similar words stored within the tree.
+# Dictionary Spell Checker (C++)
+This project is a C++ application that performs fast word lookup, spell checking, and word suggestion using an efficient prefix-based data structure. It is designed to load a large collection of English words and allow users to quickly verify spelling and receive helpful suggestions when a word is not found.
 
-This project will demonstrate efficient text lookup using Trie search time, O(L). Making it a practical data-structure-driven tool.
+The program demonstrates how core data structures can be applied to real-world text processing problems such as spell checking, autocomplete, and dictionary search.
 
-The goal of this project is to apply a Trie trees to a real-world context word lookup and spell checking
-This includes experience with:
-  * Trie implementation
-  * Recursion and node manipulation
-  * File reading and dictionary parsing
+# Overview
+The application loads a dictionary dataset and organizes it in memory to allow:
+  * Fast word searches
+  * Prefix-based suggestions
+  * Alphabetical traversal of words
+  * Efficient handling of large word lists
+This project focuses on performance, organization of data, and practical use of data structures in a realistic setting.
+
+# Features
+  * Load a dictionary file into memory
+  * Check if a word exists (spell check)
+  * Suggest similar words when a word is not found
+  * Display words in alphabetical order
+  * Efficient prefix searching for autocomplete-style behavior
+
+# Concepts Demonstrated
+  * This project provides hands-on experience with:
+  * Tree-based data structures for fast lookup
+  * Recursive traversal and node management
+  * File reading and data parsing
   * Designing search and suggestion algorithms
-  * Organizing a dictionary efficiently in memory
+  * Organizing large datasets efficiently in memory
+  * Building a practical text-processing tool in C++
 
+# Applications
+The techniques used in this project are similar to those used in:
 
-Features:
-  * Load Dictionary for Trie
-  * Word lookup (Spell Check)
-  * Suggested Word Corrections
-  * Display Dictionary (Alphabetical Order)
+  * Search engines
+  * Phone keyboard word prediction
+  * Text editors and word processors
+  * Autocomplete systems
+  * Dictionary and reference tools
 
-# Application
-This project imitates how a search engine, phone keyboard, text editor, and word processors autocomplete words. 
-By using a Trie, the application performs fast prefix lookups, making it ideal for spell checking, autocompletion, and dictionary systems.
+# Goal
+The goal of this project is to demonstrate how an efficient data structure can be used to build a practical spell checker and word lookup system capable of handling large dictionaries with high performance.
