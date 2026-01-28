@@ -1,26 +1,33 @@
 # Compiler
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -g
+CXXFLAGS = -std=c++17 -Wall -g -Iinclude
+LIBS = -lsqlite3
 
-# Target executable
-TARGET = spellchecker
+# Executable name
+TARGET = dict
 
-# Object files
-OBJS = main.o Dictionary.o
+# Source files
+SRCS = main.cpp \
+       src/Dictionary.cpp \
+       src/Trie.cpp \
+	   src/SpellChecker.cpp \
+       src/Database.cpp
 
-# Build the executable
+# Object files (auto-generated from SRCS)
+OBJS = $(SRCS:.cpp=.o)
+
+# Default target
+all: $(TARGET)
+
+# Link step
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 
-# Compile Dictionary.cpp into Dictionary.o
-Dictionary.o: Dictionary.cpp Dictionary.h
-	$(CXX) $(CXXFLAGS) -c Dictionary.cpp
+# Compile step (this is the magic)
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Compile main.cpp into main.o
-main.o: main.cpp Dictionary.h
-	$(CXX) $(CXXFLAGS) -c main.cpp
-
-# Clean up build artifacts
+# Clean build files
 clean:
 	rm -f $(OBJS) $(TARGET)
 

@@ -1,0 +1,75 @@
+#ifndef DICTIONARY_H
+#define DICTIONARY_H
+#include "Trie.h"
+#include "Database.h"
+#include "../nlohmann/json.hpp"
+#include <fstream>
+
+class Tester;
+//class Trie;
+//class Database;
+
+class Dictionary
+{
+public:
+    friend class Tester;
+
+    Dictionary();
+    ~Dictionary() = default;
+
+    bool addWord(std::string_view word);
+    bool removeWord(std::string_view word); // implement databse logic
+	bool search(std::string_view word) const; 
+	bool isEmpty() const;
+
+	void suggestFromPrefix(std::string_view prefix, std::vector<std::string> &results, std::size_t limit) const;
+    void print() const; 
+    void dump() const;
+	void dumpWord(std::string_view word) const;
+    void eraseAll();
+	void loadInfo(const std::string &filename);
+  
+	// getters
+	
+
+private:
+	// represent word info from the db in memory
+	struct WordInfo
+	{
+       	std::string lemma; // word
+	    std::vector<std::string> etymology;
+	    int id{-1}; // ??
+        
+	    // plurals or alternative spellings
+	    struct Form
+        {
+	    	std::string form;
+	    	std::string tag;
+	    };
+	    std::vector<Form> forms; 
+        
+	    struct Sense
+	 	{
+	 	    std::string pos; // noun, verb, adj, etc.
+	 	    std::string definition;
+	 	    std::vector<std::string> examples;
+      	    std::vector<std::string> synonyms;
+     	    std::vector<std::string> antonyms;
+     	};
+	    std::vector<Sense> senses; // acts a 'cache'
+	};
+
+    Trie m_trie;
+	Database m_db;
+
+    /*********************************
+    // Helper declarations go here
+    **********************************/
+	
+    bool loadjson(const std::string &filename); // make public for now (load into db)
+	
+	void buildTrie(Database &db); // implement lemma logic
+
+	std::string normalize(std::string_view word) const; 
+};
+#endif
