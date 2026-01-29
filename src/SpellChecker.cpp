@@ -13,7 +13,7 @@ std::vector<std::string> SpellChecker::suggest(std::string_view prefix) const
 { 
 	std::vector<std::string> results;
 
-	if (m_dict.isEmpty()) return results;	
+	if (m_dict.isTrieEmpty()) return results;	
 	
 	if (!prefix.empty()) m_dict.suggestFromPrefix(prefix, results, dct::g_maxSuggest);
 

@@ -1,7 +1,7 @@
 #include "Trie.h"
 #include "Utils.h"
 
-Trie::Trie() : m_root{new TrieNode()} {}
+Trie::Trie() : m_root{ new TrieNode() } {}
 
 Trie::~Trie() { deleteTrie(m_root); }
 
@@ -12,7 +12,7 @@ bool Trie::insert(std::string_view word, int word_id)
     // traverse to the last node in the word
     for (char c : word)
     {
-        int index {c - 'a'}; 
+        int index { c - 'a' }; 
 
         // check if there is an existing child node
         if (!node->m_children[index]) 
@@ -34,12 +34,12 @@ bool Trie::remove(std::string &word) { return remove(m_root, word); }
 
 bool Trie::contains(std::string_view word) const
 {
-    TrieNode *node {m_root};
+    TrieNode *node{ m_root };
 
     // traverse to the last node in the word (DFS)
     for (char c : word)
     {
-        int index {c - 'a'};
+        int index{ c - 'a' };
         if (!node->m_children[index]) return false; // not found
         node = node->m_children[index];
     }
@@ -49,12 +49,12 @@ bool Trie::contains(std::string_view word) const
 
 bool Trie::startsWith(std::string_view prefix) const
 {
-	const TrieNode *node {m_root};
+	const TrieNode *node{ m_root };
 
 	// DFS
 	for (char c : prefix)
 	{
-		int index {c - 'a'};
+		int index{ c - 'a' };
 		if (!node || !node->m_children[index]) return false;
 		node = node->m_children[index];
 	}
@@ -64,13 +64,13 @@ bool Trie::startsWith(std::string_view prefix) const
 
 std::string Trie::getPrefix(std::string_view word) const
 {
-	const TrieNode *node {m_root};
+	const TrieNode *node{ m_root };
 	std::string prefix;
 
 	// DFS
 	for (char c : word)
 	{
-		int index {c - 'a'};
+		int index{ c - 'a' };
 		if (!node || !node->m_children[index]) break;
 		
 		prefix.push_back(c);
@@ -82,13 +82,13 @@ std::string Trie::getPrefix(std::string_view word) const
 
 void Trie::collectWithPrefix(std::string_view prefix, std::vector<std::string> &out, std::size_t limit) const
 {
-	const TrieNode *node {m_root};
+	const TrieNode *node{ m_root };
 	std::string currentWord;
 
 	// DFS
 	for (char c : prefix)
 	{
-		int index {c - 'a'};
+		int index{ c - 'a' };
 		if (!node || !node->m_children[index]) return; // prefix not found
 
 		currentWord.push_back(c);
@@ -123,15 +123,15 @@ void Trie::dump() const
 void Trie::dumpWord(std::string_view word) const
 {
 	if (!contains(word)) return;
-	const TrieNode *node {m_root};
+	const TrieNode *node{ m_root };
 	if (!node) return;
 
 	std::cout << "(root)\n";
-	size_t depth {0};
+	size_t depth{ 0 }; // depth to left of screen
 
 	for (char c : word) 
 	{
-		int index {c - 'a'};
+		int index{ c - 'a' };
 
 		// print graphics
 		if (!node->m_children[index])
@@ -197,7 +197,7 @@ void Trie::rewrite(const TrieNode *node, std::string &currentWord, std::ostream 
 	{
 		if (node->m_children[i])
 		{
-			char letter {static_cast<char>('a' + i)};
+			char letter{ static_cast<char>('a' + i) };
 			currentWord.push_back(letter); // build word 
 			rewrite(node->m_children[i], currentWord, out);
 			currentWord.pop_back(); // backtrack (undo complete word) works because of recursive rewrite
@@ -212,7 +212,7 @@ void Trie::dumpNode(const TrieNode *node, const std::string &prefix) const
 	// DFS
 	for (int i{0}; i < dct::g_alpha; ++i)
 	{
-		char letter {static_cast<char>('a' + i)};
+		char letter{ static_cast<char>('a' + i) };
 		const TrieNode *child = node->m_children[i];
 		if (!child) continue;
 		bool isLast = true;
@@ -242,7 +242,7 @@ bool Trie::remove(TrieNode *&node, std::string_view word)
 {
 	if (!node) return false;
 
-	// check if end of word	
+	// check if end of word (words because of word.substr(1) on line 267) 	
 	if (word.empty())
 	{
 		if (!node->m_isEndOfWord) return false; // word is not stored
@@ -263,7 +263,7 @@ bool Trie::remove(TrieNode *&node, std::string_view word)
 	}
 	
 	// find child index
-	int index {word[0] - 'a'};
+	int index{ word[0] - 'a' };
 	if (remove(node->m_children[index], word.substr(1))) // recursively remove the rest of the word
 	{
 		if (node->m_isEndOfWord) return true; // if the current node marks the end of another word, preserve it
@@ -292,7 +292,7 @@ void Trie::collectFromNode(const TrieNode *node, std::string &currentWord, std::
 	{
 		if (node->m_children[i])
 		{
-			char letter {static_cast<char>('a' + i)};
+			char letter{ static_cast<char>('a' + i) };
 			currentWord.push_back(letter); // build word
 			collectFromNode(node->m_children[i], currentWord, out, limit);
 			currentWord.pop_back(); // backtrack (undo complete word) works because of recursive collectFromNode 

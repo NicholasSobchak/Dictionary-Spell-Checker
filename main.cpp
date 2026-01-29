@@ -10,14 +10,13 @@ int main()
 {
     Dictionary dict;
 #if 1 // implement dictionary into database
-	dict.eraseAll(); // for testing purposes
-	std::cout << (dict.isEmpty() ? "Dictionary empty" : "Dictionary not empty") << '\n' << std::endl;
+	std::cout << (dict.isTrieEmpty() ? "Dictionary empty" : "Dictionary not empty") << '\n' << std::endl;
 
-#if 0 
+#if 1 
     // Load dictionary from JSON file
-    cout << "Loading dictionary from nlohmann/words_dictionary.json..." << endl;
-    if (dict.openjson("nlohmann/words_dictionary.json")) { cout << "Dictionary loaded successfully!" << endl; }
-    else { cout << "Failed to load dictionary from JSON." << endl; }	
+	std::cout << "Loading dictionary from nlohmann/testdb.json..." << std::endl;
+    if (dict.loadInfo("nlohmann/testdb.json")) { std::cout << "Dictionary loaded successfully!" << std::endl; }
+    else { std::cout << "Failed to load dictionary from JSON." << std::endl; }	
 #endif
 
 #if 0 
@@ -54,10 +53,10 @@ int main()
 
 	std::cout << "\n--- suggestions for " << "'" << input << "'" << " ---" << std::endl;
 	checker.printSuggest(checker.suggest(input));
-	dict.dumpWord(input);
+	dict.dumpTrieWord(input);
 #endif
 
-	std::cout << '\n' << (dict.isEmpty() ? "Dictionary empty" : "Dictionary not empty") << std::endl;
+	std::cout << '\n' << (dict.isTrieEmpty() ? "Dictionary empty" : "Dictionary not empty") << std::endl;
 	// dict.debug();
 	// dict.dump();
 

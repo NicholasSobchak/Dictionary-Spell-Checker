@@ -16,19 +16,23 @@ public:
 	void createTables();
 
 	// inserters
-	bool insertWord(const std::string &lemma);
 	bool insertEtymology(int word_id, const std::vector<std::string> &etymology);
 	bool insertForm(int word_id, const std::string &form, const std::string &tag);
-	bool insertSense(int word_id, const std::string &pos, const std::string &definition);
 	bool insertExample(int word_id, const std::string &example);
 	bool insertSynonym(int word_id, const std::string &synonym);
 	bool insertAntonym(int word_id, const std::string &antonym);
+	bool isEmpty() const;
 
 	bool removeWord(int word_id); // implement
-	
-	// getters
+		
+	int insertWord(const std::string &lemma);
+	int insertSense(int word_id, const std::string &pos, const std::string &definition);
+	int getWordID(const std::string &lemma) const;
+
+	void print() const;
+	void clearDB();
+
 	sqlite3 *getDB();
-	int getWordID(const std::string &lemma);
 
 private:
 	sqlite3 *db;

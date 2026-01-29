@@ -15,7 +15,7 @@ public:
     bool insert(std::string_view word, int word_id);
     bool remove(std::string &word);
     bool contains(std::string_view word) const;
-	bool startsWith(std::string_view prefix) const;
+	bool startsWith(std::string_view prefix) const; // why?
 	bool isEmpty() const;
 
 	void collectWithPrefix(std::string_view prefix, std::vector<std::string> &out, std::size_t limit) const;
@@ -30,8 +30,8 @@ public:
 private:
     struct TrieNode {
         TrieNode *m_children[26];
-        bool m_isEndOfWord {false};
-		int m_wordID {-1};
+        bool m_isEndOfWord{ false };
+		int m_wordID { -1 };
 
         TrieNode()
         {

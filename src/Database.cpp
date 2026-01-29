@@ -68,14 +68,14 @@ void Database::createTables()
         "FOREIGN KEY(sense_id) REFERENCES senses(id) ON DELETE CASCADE);"
 	};
 
-    char* errMsg {nullptr};
+    char* errMsg{ nullptr };
     sqlite3_exec(db, sql, nullptr, nullptr, &errMsg);
 }
 
-bool Database::insertWord(const std::string& lemma) 
+int Database::insertWord(const std::string& lemma) 
 {
     sqlite3_stmt* stmt; // prepared SQL statement object
-    const char* sql {"INSERT OR IGNORE INTO words (lemma) VALUES (?);"}; // add new row if word does not exist, otherwise ignore
+    const char* sql{ "INSERT OR IGNORE INTO words (lemma) VALUES (?);" }; // add new row if word does not exist, otherwise ignore
 
 	/* 
 	db → your open database
@@ -84,7 +84,7 @@ bool Database::insertWord(const std::string& lemma)
 	&stmt → where to store the compiled statement
 	nullptr → ignore unused output
 	*/	
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) return false;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) return -1;
 
 	/*
 	stmt → prepared statement
@@ -96,9 +96,33 @@ bool Database::insertWord(const std::string& lemma)
     sqlite3_bind_text(stmt, 1, lemma.c_str(), -1, SQLITE_STATIC);
 	
 	// run the statement
-	if (sqlite3_step(stmt) != SQLITE_DONE) return false; 
+	if (sqlite3_step(stmt) != SQLITE_DONE) 
+	{ 
+		sqlite3_finalize(stmt); // free the statement from memory to avoid leaks
+		return -1;
+	}
 	sqlite3_finalize(stmt); // free the statement from memory to avoid leaks
-    return true; // word inserted successfully
+    return getWordID(lemma); // word inserted successfully
+}
+
+int Database::insertSense(int word_id, const std::string& pos, const std::string& definition) 
+{
+    sqlite3_stmt* stmt;
+    const char* sql{ "INSERT INTO senses (word_id, pos, definition) VALUES (?, ?, ?);" };
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) return -1;
+
+	// fill values
+    sqlite3_bind_int(stmt, 1, word_id);
+    sqlite3_bind_text(stmt, 2, pos.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, definition.c_str(), -1, SQLITE_STATIC);
+
+	if (sqlite3_step(stmt) != SQLITE_DONE)
+	{  
+        sqlite3_finalize(stmt);
+        return -1;	
+	}
+    sqlite3_finalize(stmt);
+	return static_cast<int>(sqlite3_last_insert_rowid(db));
 }
 
 bool Database::insertEtymology(int word_id, const std::vector<std::string> &etymology)
@@ -108,22 +132,6 @@ bool Database::insertEtymology(int word_id, const std::vector<std::string> &etym
 
 bool Database::insertForm(int word_id, const std::string &form, const std::string &tag)
 { // implement
-	return true;
-}
-
-bool Database::insertSense(int word_id, const std::string& pos, const std::string& definition) 
-{
-    sqlite3_stmt* stmt;
-    const char* sql = "INSERT INTO senses (word_id, pos, definition) VALUES (?, ?, ?);";
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) return false;
-
-	// fill values
-    sqlite3_bind_int(stmt, 1, word_id);
-    sqlite3_bind_text(stmt, 2, pos.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 3, definition.c_str(), -1, SQLITE_STATIC);
-
-	if (sqlite3_step(stmt) != SQLITE_DONE) return false;
-    sqlite3_finalize(stmt);
 	return true;
 }
 
@@ -142,12 +150,17 @@ bool Database::insertAntonym(int word_id, const std::string &antonym)
 	return true;
 }
 
+bool Database::isEmpty() const
+{ // implement
+	return false;
+}
+
 bool Database::removeWord(int word_id)
 { // implement
 	return false;
 }
 
-int Database::getWordID(const std::string &lemma)
+int Database::getWordID(const std::string &lemma) const
 {
 	sqlite3_stmt* stmt;
 	const char* sql {"SELECT id FROM words WHERE lemma = ?;"};
@@ -167,4 +180,38 @@ int Database::getWordID(const std::string &lemma)
 
 	sqlite3_finalize(stmt);
 	return word_id;
+}
+
+void Database::clearDB()
+{
+	if (isEmpty()) return;
+
+	const char* sql 
+	{
+        "PRAGMA foreign_keys = OFF;"
+        "DELETE FROM examples;"
+        "DELETE FROM synonyms;"
+        "DELETE FROM antonyms;"
+        "DELETE FROM senses;"
+        "DELETE FROM forms;"
+        "DELETE FROM etymology;"
+        "DELETE FROM words;"
+        "DELETE FROM sqlite_sequence;"
+        "PRAGMA foreign_keys = ON;"
+	};
+
+	char* errMsg{ nullptr };
+    int rc{ sqlite3_exec(db, sql, nullptr, nullptr, &errMsg) };
+
+    if (rc != SQLITE_OK)
+    {
+        std::cerr << "Error clearing database: " << errMsg << "\n";
+        sqlite3_free(errMsg);
+        return;
+    }
+}
+
+void Database::print() const
+{
+
 }

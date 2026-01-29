@@ -8,26 +8,21 @@ Dictionary::Dictionary() : m_db{dct::g_dictDb}
 }
 
 bool Dictionary::addWord(std::string_view word)
-{
-	std::string cleanWord {normalize(word)};
+{ // fix logic
+	std::string cleanWord{ normalize(word) };
 	if (cleanWord.empty()) return false;
 
-	// insert into db
-	if (m_db.insertWord(cleanWord)) return false;
-	int word_id {m_db.getWordID(cleanWord)};
-	if (word_id <= 0) return false;
-
-	// insert into trie
-	if (!m_trie.insert(cleanWord, word_id)) return false;
-
+	// IMPLEMENT 
+	
 	return true;	
 }
 
 bool Dictionary::removeWord(std::string_view word)
-{ // implement remove from db
+{ 
 	if (m_trie.isEmpty()) return false;
-
-	std::string cleanWord {normalize(word)};
+	
+	// IMPLEMENT 
+	std::string cleanWord{ normalize(word) };
 	if (cleanWord.empty()) return false;
 
 	if (!m_trie.remove(cleanWord)) return false;
@@ -35,38 +30,21 @@ bool Dictionary::removeWord(std::string_view word)
 	return true;
 }
 
-bool Dictionary::search(std::string_view word) const
+bool Dictionary::trieContainsWord(std::string_view word) const
 {
 	if (m_trie.isEmpty()) return false;
 
-	std::string cleanWord {normalize(word)};
+	std::string cleanWord{ normalize(word) };
 	if (cleanWord.empty()) return false;
+
 	return m_trie.contains(cleanWord);
 }
 
-void Dictionary::suggestFromPrefix(std::string_view prefix, std::vector<std::string> &results, std::size_t limit) const 
-{
-	std::string cleanPrefix {normalize(prefix)};
-	if (cleanPrefix.empty()) return;
-	m_trie.collectWithPrefix(cleanPrefix, results, limit+1); // LOGIC ERROR: (off by 1) - balance the prefix being removed from the results
+bool Dictionary::isTrieEmpty() const { return m_trie.isEmpty(); }
 
-	// remove the prefix from the results vector
-	results.erase(std::remove(results.begin(), results.end(), prefix), results.end());
-}
+bool Dictionary::isDBEmpty() const { return m_db.isEmpty(); }
 
-// void Dictionary::loadTxt(const string &filename) { load(filename); } // expendable
-
-void Dictionary::print() const { m_trie.print(); } 
-
-void Dictionary::dump() const { m_trie.dump(); }
-
-void Dictionary::dumpWord(std::string_view word) const { m_trie.dumpWord(word); }
-
-void Dictionary::eraseAll() { m_trie.clear(); }
-
-bool Dictionary::isEmpty() const { return m_trie.isEmpty(); }
-
-void Dictionary::loadInfo(const std::string &filename)
+bool Dictionary::loadInfo(const std::string &filename)
 {
 	/*
 	   compatible file type:
@@ -77,18 +55,19 @@ void Dictionary::loadInfo(const std::string &filename)
 	*/
 	// parse filename
 	std::size_t p {filename.find_last_of('.')};
-	std::string extension {""};
+	std::string extension{ "" };
+	bool success{ false };
 
-	if (p == std::string::npos) std::cout << "Error: file has no extension!" << std::endl;
+	if (p == std::string::npos) std::cerr << "Error: file has no extension!" << std::endl;
 	else extension = filename.substr(p);
 
 	// temporary
 	if (extension == ".json")
 	{
-	    loadjson(filename);
+	    success = loadjson(filename);
 	} else
 	{
-		std::cout << "Error: file extension not recognized." << std::endl;
+		std::cerr << "Error: file extension not recognized." << std::endl;
 	}
 
 #if 0
@@ -107,14 +86,36 @@ void Dictionary::loadInfo(const std::string &filename)
 	
 	else std::cout << "Error: file extension not recognized." << std::endl;
 #endif
+
+	return success;
 }
+
+void Dictionary::suggestFromPrefix(std::string_view prefix, std::vector<std::string> &results, std::size_t limit) const 
+{
+	std::string cleanPrefix{ normalize(prefix) };
+	if (cleanPrefix.empty()) return;
+	m_trie.collectWithPrefix(cleanPrefix, results, limit+1); // LOGIC ERROR: (off by 1) - balance the prefix being removed from the results
+
+	// remove the prefix from the results vector
+	results.erase(std::remove(results.begin(), results.end(), prefix), results.end());
+}
+
+void Dictionary::printTrie() const { m_trie.print(); } 
+
+void Dictionary::dumpTrie() const { m_trie.dump(); }
+
+void Dictionary::dumpTrieWord(std::string_view word) const { m_trie.dumpWord(word); }
+
+void Dictionary::clearTrie() { m_trie.clear(); }
+
+void Dictionary::clearDB() { m_db.clearDB(); }
 
 /*********************************
 // Dictionary Helper Functions
 **********************************/
 std::string Dictionary::normalize(std::string_view word) const 
 {
-	std::string cleanWord {""};
+	std::string cleanWord{ "" };
 	for (char c : word)
 	{
 		if (!isalpha(static_cast<unsigned char>(c))) continue;
@@ -128,16 +129,33 @@ std::string Dictionary::normalize(std::string_view word) const
 
 void Dictionary::buildTrie(Database &db) 
 {
-    sqlite3* sqlDB = m_db.getDB();
+    sqlite3* sqlDB{ m_db.getDB() };
     sqlite3_stmt* stmt;
-    const char* query = "SELECT lemma FROM words;";
-    sqlite3_prepare_v2(sqlDB, query, -1, &stmt, nullptr);
+
+	// insert all lemmas
+    const char* q1 = "SELECT id, lemma FROM words;";
+    sqlite3_prepare_v2(sqlDB, q1, -1, &stmt, nullptr);
+
     while (sqlite3_step(stmt) == SQLITE_ROW) 
 	{
-        const unsigned char* text = sqlite3_column_text(stmt, 0);
-		std::string word {reinterpret_cast<const char*>(text)};
-        m_trie.insert(word, m_db.getWordID(word)); 
+	    int id{ sqlite3_column_int(stmt, 0) };
+        const unsigned char* text{ sqlite3_column_text(stmt, 1) };
+        std::string lemma{ reinterpret_cast<const char*>(text) };
+        m_trie.insert(lemma, id);  
 	}
+
+	// insert all forms
+    const char* q2 = "SELECT word_id, form FROM forms;";
+    sqlite3_prepare_v2(sqlDB, q2, -1, &stmt, nullptr);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int id{ sqlite3_column_int(stmt, 0) };
+        const unsigned char* text{ sqlite3_column_text(stmt, 1) };
+        std::string lemma{ reinterpret_cast<const char*>(text) };
+        std::string form = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        m_trie.insert(form, id);
+    }
     sqlite3_finalize(stmt);
 }
 
@@ -160,11 +178,8 @@ bool Dictionary::loadjson(const std::string &filename)
             WordInfo word;
             word.lemma = j["word"];
 
-            // insert into trie and database
-            addWord(word.lemma);
-
-            // get word_id from database
-            word.id = m_db.getWordID(word.lemma);
+            // insert and get word ID from database
+            word.id = m_db.insertWord((word.lemma));
 
             // Etymology
             if (j.contains("etymology_text"))
@@ -239,20 +254,19 @@ bool Dictionary::loadjson(const std::string &filename)
                     word.senses.push_back(sense); // vector of senses for potentinal quick lookups
 
                     // Insert into DB
-                    m_db.insertSense(word.id, sense.pos, sense.definition);
+                    int sense_id{ m_db.insertSense(word.id, sense.pos, sense.definition) };
 
                     for (const auto &ex : sense.examples)
-                        m_db.insertExample(word.id, ex);
+                        m_db.insertExample(sense_id, ex);
 
                     for (const auto &syn : sense.synonyms)
-                        m_db.insertSynonym(word.id, syn);
+                        m_db.insertSynonym(sense_id, syn);
 
                     for (const auto &ant : sense.antonyms)
-                        m_db.insertAntonym(word.id, ant);
+                        m_db.insertAntonym(sense_id, ant);
                 }
             }
 
-			// ADD TO DICTIONARY??	
 			//m_words[word.lemma] = word; // add to Dictionary storage??? (map<string, WordInfo>)
         }
         catch (const std::exception& e)
@@ -261,5 +275,13 @@ bool Dictionary::loadjson(const std::string &filename)
         }
     }
 
+	// build the trie
+	buildTrie(m_db);
+
     return true;
+}
+
+bool Dictionary::search(std::string_view word) const
+{
+	return false;
 }
